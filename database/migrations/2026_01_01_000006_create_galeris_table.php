@@ -11,8 +11,8 @@ return new class extends Migration {
             $table->id();
             $table->string('judul');
             $table->enum('jenis', ['foto', 'video']);
-            $table->string('file_path')->nullable();  // untuk foto (storage)
-            $table->string('video_url')->nullable();  // untuk video (mis. YouTube embed)
+            $table->string('file_path')->nullable();   
+            $table->string('video_url')->nullable();   
             $table->date('tanggal')->nullable();
             $table->timestamps();
         });

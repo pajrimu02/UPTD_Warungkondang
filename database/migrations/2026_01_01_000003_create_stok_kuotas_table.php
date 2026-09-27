@@ -11,8 +11,8 @@ return new class extends Migration {
             $table->id();
             $table->enum('jenis', ['pupuk', 'solar']);
             $table->string('judul');
-            $table->text('isi'); // kuota, jadwal distribusi, dll
-            $table->string('periode')->nullable(); // mis. "Triwulan I 2026"
+            $table->text('isi');  
+            $table->string('periode')->nullable();  
             $table->timestamps();
         });
     }

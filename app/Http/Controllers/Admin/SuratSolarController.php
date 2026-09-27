@@ -1,5 +1,5 @@
 <?php
-// app/Http/Controllers/Admin/SuratSolarController.php
+ 
 
 namespace App\Http\Controllers\Admin;
 

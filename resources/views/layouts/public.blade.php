@@ -28,8 +28,6 @@
                     </div>
                 </div>
 
-
-
                 <div class="relative group">
                     <span class="cursor-pointer">Galeri ▾</span>
                     <div class="absolute hidden group-hover:block bg-white border border-[#E1DCC9] rounded-lg p-2 min-w-[140px] shadow">
@@ -38,6 +36,7 @@
                     </div>
                 </div>
 
+                <a href="{{ route('kritiksaran.publik') }}">Kritik & Saran</a>
                 <a href="{{ route('hubungi') }}">Hubungi Kami</a>
             </nav>
             @auth

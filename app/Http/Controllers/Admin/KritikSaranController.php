@@ -1,5 +1,4 @@
 <?php
-// app/Http/Controllers/Admin/KritikSaranController.php
 
 namespace App\Http\Controllers\Admin;
 
@@ -32,7 +31,7 @@ class KritikSaranController extends Controller
     public function update(Request $request, KritikSaran $kritikSaran): RedirectResponse
     {
         $validated = $request->validate([
-            'status' => ['required', 'in:pending,diproses,selesai'],
+            'status' => ['required', 'in:baru,ditanggapi'],
             'tanggapan_admin' => ['nullable', 'string', 'max:1000'],
         ]);
 
@@ -40,6 +39,6 @@ class KritikSaranController extends Controller
 
         return redirect()
             ->route('admin.kritiksaran.show', $kritikSaran)
-            ->with('status', 'Tanggapan berhasil disimpan.');
+            ->with('success', 'Tanggapan berhasil disimpan.');
     }
 }

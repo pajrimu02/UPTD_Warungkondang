@@ -8,11 +8,10 @@
 
         <form method="GET" class="flex gap-2">
             <select name="status" onchange="this.form.submit()" class="text-sm rounded-lg border-[#E1DCC9]">
-                <option value="">Semua Status</option>
-                @foreach (['pending','diproses','selesai'] as $s)
-                    <option value="{{ $s }}" {{ request('status') === $s ? 'selected' : '' }}>{{ ucfirst($s) }}</option>
-                @endforeach
-            </select>
+            <option value="">Semua Status</option>
+            <option value="baru" {{ request('status') === 'baru' ? 'selected' : '' }}>Baru</option>
+            <option value="ditanggapi" {{ request('status') === 'ditanggapi' ? 'selected' : '' }}>Ditanggapi</option>
+        </select>
         </form>
     </div>
 
@@ -25,11 +24,10 @@
                         <span class="text-xs text-[#5C6B62]"> · {{ $item->user->name }} · {{ $item->created_at->diffForHumans() }}</span>
                     </div>
                     <span @class([
-                        'text-xs px-3 py-1 rounded-full font-medium',
-                        'bg-yellow-100 text-yellow-800' => $item->status === 'pending',
-                        'bg-blue-100 text-blue-800' => $item->status === 'diproses',
-                        'bg-green-100 text-green-800' => $item->status === 'selesai',
-                    ])>{{ ucfirst($item->status) }}</span>
+                    'text-xs px-3 py-1 rounded-full font-medium',
+                    'bg-amber-50 text-amber-700 border border-amber-200' => $item->status === 'baru',
+                    'bg-emerald-50 text-emerald-700 border border-emerald-200' => $item->status === 'ditanggapi',
+                ])>{{ $item->status === 'ditanggapi' ? 'Ditanggapi' : 'Baru' }}</span>
                 </div>
                 <p class="text-sm text-[#14231C]">{{ Str::limit($item->isi, 120) }}</p>
             </a>

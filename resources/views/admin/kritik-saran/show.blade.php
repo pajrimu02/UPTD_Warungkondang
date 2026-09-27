@@ -29,10 +29,9 @@
                 <div>
                     <label class="block text-sm font-medium mb-1">Status</label>
                     <select name="status" class="w-full rounded-lg border-[#E1DCC9] text-sm">
-                        @foreach (['pending','diproses','selesai'] as $s)
-                            <option value="{{ $s }}" {{ $kritikSaran->status === $s ? 'selected' : '' }}>{{ ucfirst($s) }}</option>
-                        @endforeach
-                    </select>
+                    <option value="baru" {{ $kritikSaran->status === 'baru' ? 'selected' : '' }}>Baru</option>
+                    <option value="ditanggapi" {{ $kritikSaran->status === 'ditanggapi' ? 'selected' : '' }}>Ditanggapi</option>
+                </select>
                 </div>
 
                 <div>
