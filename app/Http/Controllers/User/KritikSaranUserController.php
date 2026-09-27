@@ -1,5 +1,5 @@
 <?php
- 
+// app/Http/Controllers/User/KritikSaranUserController.php
 
 namespace App\Http\Controllers\User;
 
@@ -23,12 +23,11 @@ class KritikSaranUserController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'kategori' => ['required', 'in:keluhan,saran,pertanyaan'],
+            'kategori' => ['required', 'in:surat,pupuk_solar,lainnya'],
             'isi' => ['required', 'string', 'max:2000'],
         ]);
 
         $validated['user_id'] = auth()->id();
-        $validated['status'] = 'pending';
 
         KritikSaran::create($validated);
 
