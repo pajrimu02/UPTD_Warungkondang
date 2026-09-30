@@ -3,13 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Poktan extends Model
 {
-    protected $fillable = ['nama_kelompok', 'nama_ketua', 'jumlah_anggota', 'luas_lahan_ha', 'alamat'];
+    protected $fillable = ['nama_kelompok', 'desa', 'kecamatan'];
 
-    public function pengajuanSolar()
+    public function users(): HasMany
     {
-        return $this->hasMany(PengajuanSolar::class);
+        return $this->hasMany(User::class);
     }
 }

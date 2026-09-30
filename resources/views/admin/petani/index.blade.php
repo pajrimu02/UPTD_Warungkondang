@@ -32,7 +32,18 @@
                     </span>
                     <div class="flex-1 min-w-0">
                         <p class="font-medium text-[#14231C]">{{ $petani->name }}</p>
-                        <p class="text-sm text-[#5C6B62]">{{ $petani->email }} @if($petani->no_hp) · {{ $petani->no_hp }} @endif</p>
+                        <p class="text-sm text-[#5C6B62]">
+                            {{ $petani->email }}
+                            @if($petani->no_hp) · {{ $petani->no_hp }} @endif
+                        </p>
+                        <p class="text-xs text-[#5C6B62] mt-0.5">
+                            NIK: {{ $petani->nik ?? '-' }}
+                            · Poktan: {{ $petani->poktan->nama_kelompok ?? '-' }}
+                            @if($petani->konsumen_pengguna)
+                                · {{ \App\Http\Controllers\Auth\RegisteredUserController::KONSUMEN[$petani->konsumen_pengguna] ?? $petani->konsumen_pengguna }}
+                            @endif
+                            @if($petani->jenis_usaha) · {{ $petani->jenis_usaha }} @endif
+                        </p>
                     </div>
                     <div class="flex items-center gap-3 shrink-0 text-sm">
                         <a href="{{ route('admin.petani.edit', $petani) }}" class="text-[#1B4332] underline">Edit</a>

@@ -28,20 +28,51 @@
         <dl class="divide-y divide-[#E1DCC9]">
             <div class="flex items-center gap-4 px-6 py-4">
                 <i class="bi bi-person-vcard text-[#5C6B62] w-5 shrink-0"></i>
-                <dt class="text-sm text-[#5C6B62] w-32 shrink-0">NIK</dt>
+                <dt class="text-sm text-[#5C6B62] w-36 shrink-0">NIK</dt>
                 <dd class="text-sm font-medium">{{ $user->nik ?: '—' }}</dd>
             </div>
             <div class="flex items-center gap-4 px-6 py-4">
                 <i class="bi bi-telephone text-[#5C6B62] w-5 shrink-0"></i>
-                <dt class="text-sm text-[#5C6B62] w-32 shrink-0">No. HP</dt>
+                <dt class="text-sm text-[#5C6B62] w-36 shrink-0">No. HP</dt>
                 <dd class="text-sm font-medium">{{ $user->no_hp ?: '—' }}</dd>
             </div>
+            <div class="flex items-start gap-4 px-6 py-4">
+                <i class="bi bi-geo-alt text-[#5C6B62] w-5 shrink-0"></i>
+                <dt class="text-sm text-[#5C6B62] w-36 shrink-0">Alamat</dt>
+                <dd class="text-sm font-medium">{{ $user->alamat ?: '—' }}</dd>
+            </div>
+            <div class="flex items-center gap-4 px-6 py-4">
+                <i class="bi bi-people text-[#5C6B62] w-5 shrink-0"></i>
+                <dt class="text-sm text-[#5C6B62] w-36 shrink-0">Kelompok Tani</dt>
+                <dd class="text-sm font-medium">{{ $user->poktan->nama_kelompok ?? '—' }}</dd>
+            </div>
+            <div class="flex items-center gap-4 px-6 py-4">
+                <i class="bi bi-tag text-[#5C6B62] w-5 shrink-0"></i>
+                <dt class="text-sm text-[#5C6B62] w-36 shrink-0">Konsumen Pengguna</dt>
+                <dd class="text-sm font-medium">
+                    {{ $user->konsumen_pengguna
+                        ? (\App\Http\Controllers\Auth\RegisteredUserController::KONSUMEN[$user->konsumen_pengguna] ?? $user->konsumen_pengguna)
+                        : '—' }}
+                </dd>
+            </div>
+            <div class="flex items-center gap-4 px-6 py-4">
+                <i class="bi bi-briefcase text-[#5C6B62] w-5 shrink-0"></i>
+                <dt class="text-sm text-[#5C6B62] w-36 shrink-0">Jenis Usaha</dt>
+                <dd class="text-sm font-medium">{{ $user->jenis_usaha ?: '—' }}</dd>
+            </div>
+            @if ($user->nama_kapal)
+                <div class="flex items-center gap-4 px-6 py-4">
+                    <i class="bi bi-tsunami text-[#5C6B62] w-5 shrink-0"></i>
+                    <dt class="text-sm text-[#5C6B62] w-36 shrink-0">Nama Kapal</dt>
+                    <dd class="text-sm font-medium">{{ $user->nama_kapal }}</dd>
+                </div>
+            @endif
             <div class="flex items-center gap-4 px-6 py-4">
                 <i class="bi bi-calendar-check text-[#5C6B62] w-5 shrink-0"></i>
-                <dt class="text-sm text-[#5C6B62] w-32 shrink-0">Bergabung</dt>
+                <dt class="text-sm text-[#5C6B62] w-36 shrink-0">Bergabung</dt>
                 <dd class="text-sm font-medium">{{ $user->created_at->translatedFormat('d F Y') }}</dd>
             </div>
         </dl>
     </div>
 
-@endsection
+@endsection 

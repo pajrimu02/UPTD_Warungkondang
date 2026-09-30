@@ -4,6 +4,8 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -19,6 +21,13 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
+        'nik',
+        'no_hp',
+        'alamat',
+        'konsumen_pengguna',
+        'jenis_usaha',
+        'nama_kapal',
+        'poktan_id',
         'email',
         'password',
         'role',
@@ -47,7 +56,12 @@ class User extends Authenticatable
         ];
     }
 
-    public function suratSolars()
+    public function poktan(): BelongsTo
+    {
+        return $this->belongsTo(Poktan::class);
+    }
+
+    public function suratSolars(): HasMany
     {
         return $this->hasMany(SuratSolar::class);
     }

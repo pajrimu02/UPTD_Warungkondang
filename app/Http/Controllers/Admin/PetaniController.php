@@ -1,9 +1,10 @@
 <?php
-// app/Http/Controllers/Admin/PetaniController.php
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Controller;
+use App\Models\Poktan;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
@@ -16,7 +17,8 @@ class PetaniController extends Controller
 {
     public function index(Request $request): View
     {
-        $petanis = User::where('role', 'user')
+        $petanis = User::with('poktan')
+            ->where('role', 'user')
             ->when($request->filled('search'), fn ($q) => $q->where(function ($q) use ($request) {
                 $q->where('name', 'like', "%{$request->search}%")
                     ->orWhere('email', 'like', "%{$request->search}%")
@@ -33,7 +35,11 @@ class PetaniController extends Controller
     {
         abort_unless($user->role === 'user', 404);
 
-        return view('admin.petani.edit', ['petani' => $user]);
+        return view('admin.petani.edit', [
+            'petani'   => $user,
+            'poktans'  => Poktan::orderBy('nama_kelompok')->get(),
+            'konsumen' => RegisteredUserController::KONSUMEN,
+        ]);
     }
 
     public function update(Request $request, User $user): RedirectResponse
@@ -41,10 +47,19 @@ class PetaniController extends Controller
         abort_unless($user->role === 'user', 404);
 
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', Rule::unique('users', 'email')->ignore($user->id)],
-            'nik' => ['nullable', 'digits:16'],
-            'no_hp' => ['nullable', 'string', 'max:15'],
+            'name'              => ['required', 'string', 'max:255'],
+            'email'             => ['required', 'email', Rule::unique('users', 'email')->ignore($user->id)],
+            'nik'               => ['nullable', 'digits:16', Rule::unique('users', 'nik')->ignore($user->id)],
+            'no_hp'             => ['nullable', 'string', 'regex:/^(\+62|62|0)8[0-9]{8,12}$/'],
+            'alamat'            => ['nullable', 'string', 'max:500'],
+            'konsumen_pengguna' => ['nullable', Rule::in(array_keys(RegisteredUserController::KONSUMEN))],
+            'jenis_usaha'       => ['nullable', 'string', 'max:255'],
+            'nama_kapal'        => ['nullable', 'string', 'max:255'],
+            'poktan_id'         => ['nullable', 'exists:poktans,id'],
+        ], [
+            'nik.digits'  => 'NIK harus 16 digit angka.',
+            'nik.unique'  => 'NIK sudah dipakai akun lain.',
+            'no_hp.regex' => 'Format No. HP tidak valid (contoh: 081234567890).',
         ]);
 
         $user->update($validated);

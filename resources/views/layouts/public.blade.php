@@ -55,7 +55,10 @@
                             </form>
                         </div>
                     @else
-                        <a href="{{ route('login') }}" class="bg-[#1B4332] text-white text-sm px-4 py-2 rounded-full">Masuk</a>
+                        <div class="flex items-center gap-3">
+                            <a href="{{ route('login') }}" class="border border-[#1B4332] text-[#1B4332] text-sm px-4 py-2 rounded-full">Masuk</a>
+                            <a href="{{ route('register') }}" class="bg-[#1B4332] text-white text-sm px-4 py-2 rounded-full">Daftar</a>
+                        </div>
                     @endauth
                 </div>
 
@@ -87,7 +90,7 @@
                 <a href="{{ route('hubungi') }}" class="block py-2">Hubungi Kami</a>
 
                 <div class="pt-3">
-                    @auth
+                   @auth
                         <a href="{{ auth()->user()->role === 'admin' ? route('admin.dashboard') : route('user.dashboard') }}" class="block py-2 font-medium text-[#1B4332]">
                             {{ auth()->user()->name }}
                         </a>
@@ -96,7 +99,8 @@
                             <button type="submit" class="w-full text-center bg-[#1B4332] text-white text-sm px-4 py-2 rounded-full mt-2">Keluar</button>
                         </form>
                     @else
-                        <a href="{{ route('login') }}" class="block w-full text-center bg-[#1B4332] text-white text-sm px-4 py-2 rounded-full">Masuk</a>
+                        <a href="{{ route('login') }}" class="block w-full text-center border border-[#1B4332] text-[#1B4332] text-sm px-4 py-2 rounded-full">Masuk</a>
+                        <a href="{{ route('register') }}" class="block w-full text-center bg-[#1B4332] text-white text-sm px-4 py-2 rounded-full mt-2">Daftar</a>
                     @endauth
                 </div>
             </div>
