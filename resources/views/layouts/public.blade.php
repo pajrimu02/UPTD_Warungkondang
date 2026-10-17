@@ -11,7 +11,11 @@
 
     <header class="border-b border-[#E1DCC9] bg-[#F5F3EC] sticky top-0 z-50">
         <div class="max-w-6xl mx-auto flex items-center justify-between px-6 py-4">
-            <a href="{{ route('home') }}" class="font-semibold text-[#1B4332]">UPTD Pertanian Warungkondang</a>
+            <a href="{{ route('home') }}" class="flex items-center shrink-0" aria-label="UPTD Pertanian Warungkondang - Beranda">
+    <img src="{{ asset('storage/logo/logo_uptd.png') }}"
+         alt="Logo UPTD Pertanian Warungkondang"
+         class="h-10 md:h-12 w-auto object-contain">
+</a>
 
             {{-- Nav desktop --}}
             <nav class="hidden md:flex items-center gap-6 text-sm">
