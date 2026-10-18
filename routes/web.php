@@ -53,6 +53,8 @@ Route::middleware(['auth', 'role:user'])->prefix('dashboard')->name('user.')->gr
 
     Route::resource('surat-solar', SuratSolarController::class)
         ->only(['index', 'create', 'store', 'show']);
+        Route::get('/surat-solar/{surat_solar}/resmi', [SuratSolarController::class, 'resmi'])->name('surat-solar.resmi');  
+    Route::post('/surat-solar-cepat', [SuratSolarController::class, 'quickStore'])->name('surat-solar.quick-store');
 
     Route::get('/profil', [ProfilController::class, 'show'])->name('profil');
     Route::get('/profil/edit', [ProfilController::class, 'edit'])->name('profil.edit');
@@ -70,6 +72,8 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/surat-solar', [AdminSuratSolarController::class, 'index'])->name('surat-solar.index');
     Route::get('/surat-solar/{suratSolar}', [AdminSuratSolarController::class, 'show'])->name('surat-solar.show');
     Route::put('/surat-solar/{suratSolar}', [AdminSuratSolarController::class, 'update'])->name('surat-solar.update');
+    Route::get('/surat-solar/{suratSolar}/lembar-kerja', [AdminSuratSolarController::class, 'lembarKerja'])->name('surat-solar.lembar-kerja');
+Route::post('/surat-solar/{suratSolar}/upload-surat', [AdminSuratSolarController::class, 'uploadSurat'])->name('surat-solar.upload-surat');
 
     Route::get('/kritik-saran', [AdminKritikSaranController::class, 'index'])->name('kritiksaran.index');
     Route::get('/kritik-saran/{kritikSaran}', [AdminKritikSaranController::class, 'show'])->name('kritiksaran.show');

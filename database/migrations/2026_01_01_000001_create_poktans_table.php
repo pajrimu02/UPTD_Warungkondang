@@ -11,6 +11,7 @@ return new class extends Migration
         Schema::create('poktans', function (Blueprint $table) {
             $table->id();
             $table->string('nama_kelompok');
+            $table->string('nama_ketua')->nullable();
             $table->string('desa')->nullable();
             $table->string('kecamatan')->nullable();
             $table->timestamps();
