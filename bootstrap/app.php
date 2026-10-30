@@ -12,6 +12,13 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias(['role' => \App\Http\Middleware\EnsureRole::class]);
+
+      
+        $middleware->redirectUsersTo(fn () => match (auth()->user()?->role) {
+            'admin' => route('admin.dashboard'),
+            'ketua' => route('ketua.dashboard'),
+            default => route('user.dashboard'),
+        });
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

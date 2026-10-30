@@ -65,4 +65,32 @@ class User extends Authenticatable
     {
         return $this->hasMany(SuratSolar::class);
     }
+
+         
+    public function suratPupuks(): HasMany
+    {
+        return $this->hasMany(SuratPupuk::class);
+    }
+    
+    public function poktanDisetujui(): ?Poktan
+    {
+        $p = $this->poktan_id
+            ? Poktan::with('desa')->where('status', 'disetujui')->find($this->poktan_id)
+            : null;
+
+        return $p ?? $this->poktanPengelola();
+    }
+    
+    public function poktanPengelola(): ?Poktan
+    {
+        return Poktan::with('desa')
+            ->where('status', 'disetujui')
+            ->where(function ($q) {
+                $q->where('diajukan_oleh', $this->id);
+                if ($this->nik) {
+                    $q->orWhereHas('anggota', fn ($a) => $a->where('jabatan', 'ketua')->where('nik', $this->nik));
+                }
+            })
+            ->latest()->first();
+    }
 }

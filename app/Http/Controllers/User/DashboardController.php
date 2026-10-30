@@ -1,23 +1,26 @@
-<?php
-// app/Http/Controllers/User/DashboardController.php
-
+<?php 
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
-use App\Models\SuratSolar;  
+use App\Models\SuratPupuk;
+use App\Models\SuratSolar;
+use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
-    public function index()
+    public function index(Request $request): View
     {
-        $user = auth()->user();
+        $id = $request->user()->id;
 
-        $totalPengajuan = SuratSolar::where('user_id', $user->id)->count();
+        $terakhir = collect([
+            SuratSolar::where('user_id', $id)->latest()->first(),
+            SuratPupuk::where('user_id', $id)->latest()->first(),
+        ])->filter()->sortByDesc('created_at')->first();
 
-        $statusTerakhir = SuratSolar::where('user_id', $user->id)
-            ->latest()
-            ->value('status');  
-
-        return view('user.dashboard', compact('totalPengajuan', 'statusTerakhir'));
+        return view('user.dashboard', [
+            'totalPengajuan' => SuratSolar::where('user_id', $id)->count() + SuratPupuk::where('user_id', $id)->count(),
+            'statusTerakhir' => $terakhir?->status,
+        ]);
     }
 }

@@ -11,19 +11,26 @@ class SuratSolar extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id', 'poktan_id', 'nama_pemohon', 'nik', 'alamat', 'no_hp',
-        'status_konsumen', 'jenis_usaha', 'nama_kapal',
-        'jenis_alat_mesin', 'fungsi_alat_mesin', 'jumlah_alat_mesin', 'daya_alat_mesin',
-        'lama_penggunaan', 'lama_operasi',
-        'usulan_volume_konsumsi', 'volume_periode', 'estimasi_sisa_liter',
-        'file_ktp', 'file_sku', 'file_foto_mesin',
-        'status', 'catatan_admin', 'nomor_surat', 'file_surat_resmi',
-        'spk_skor', 'spk_label',
-        'disetujui_oleh', 'disetujui_at',
+    'user_id', 'poktan_id', 'nama_pemohon', 'nik', 'alamat', 'no_hp',
+    'status_konsumen', 'jenis_usaha', 'nama_kapal',
+    'jenis_alat_mesin', 'fungsi_alat_mesin', 'jumlah_alat_mesin', 'daya_alat_mesin',
+    'lama_penggunaan', 'lama_operasi',
+    'usulan_volume_konsumsi', 'volume_periode', 'estimasi_sisa_liter',
+    'file_ktp', 'file_sku', 'file_foto_mesin',
+    'status', 'catatan_admin', 'nomor_surat', 'file_surat_resmi',
+    'spk_skor', 'spk_label',
+    'disetujui_oleh', 'disetujui_at',
+    'ttd_dikirim_at', 'ttd_kembali_at', 'diserahkan_at',
+    'alokasi_volume', 'tempat_pengambilan', 'nomor_penyalur',
+    'alamat_penyalur', 'alat_pembelian', 'berlaku_sampai',
     ];
 
     protected $casts = [
         'disetujui_at' => 'datetime',
+        'ttd_dikirim_at' => 'datetime',
+        'ttd_kembali_at' => 'datetime',
+        'diserahkan_at' => 'datetime',
+        'berlaku_sampai' => 'date',
     ];
 
     public function user(): BelongsTo
@@ -64,13 +71,13 @@ class SuratSolar extends Model
     };
 
     return ['skor' => $totalSkor, 'label' => $label];
-}
+    }
 
-/**
- * Nomor surat otomatis, urut per bulan. Format: 001/REK-SOLAR/UPTD-WRK/X/2026
- */
-public static function generateNomorSurat(): string
-{
+    /**
+     * Nomor surat otomatis, urut per bulan. Format: 001/REK-SOLAR/UPTD-WRK/X/2026
+     */
+    public static function generateNomorSurat(): string
+    {
     $bulanRomawi = [1 => 'I', 2 => 'II', 3 => 'III', 4 => 'IV', 5 => 'V', 6 => 'VI', 7 => 'VII', 8 => 'VIII', 9 => 'IX', 10 => 'X', 11 => 'XI', 12 => 'XII'];
     $bulan = $bulanRomawi[now()->month];
     $tahun = now()->year;
@@ -83,5 +90,29 @@ public static function generateNomorSurat(): string
     $nomorUrut = str_pad($urutan, 3, '0', STR_PAD_LEFT);
 
     return "{$nomorUrut}/REK-SOLAR/UPTD-WRK/{$bulan}/{$tahun}";
-}
+    
+    }
+
+    public function isianOtomatis(): array
+    {
+        $faktor = ['minggu' => 1, 'bulan' => 1 / 4, 'tiga_bulan' => 1 / 13][$this->volume_periode] ?? 1;
+
+        
+        $terakhir = self::where('id', '!=', $this->id)
+            ->where('status', 'diterima')
+            ->whereNotNull('nomor_penyalur')
+            ->orderByRaw('user_id = ? desc', [$this->user_id])
+            ->latest('disetujui_at')
+            ->first();
+
+        return [
+            'alokasi_volume' => round((float) $this->usulan_volume_konsumsi * $faktor),
+            'tempat_pengambilan' => $terakhir?->tempat_pengambilan ?? config('uptd.default_tempat_pengambilan'),
+            'nomor_penyalur' => $terakhir?->nomor_penyalur ?? config('uptd.default_nomor_penyalur'),
+            'alamat_penyalur' => $terakhir?->alamat_penyalur ?? config('uptd.default_alamat_penyalur'),
+            'alat_pembelian' => $terakhir?->alat_pembelian ?? config('uptd.default_alat_pembelian'),
+            'berlaku_sampai' => now()->addMonths(config('uptd.masa_berlaku_bulan', 3))->format('Y-m-d'),
+        ];
+    }
+
 }

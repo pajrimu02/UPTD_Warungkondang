@@ -27,9 +27,13 @@ class RegisteredUserController extends Controller
 
     public function create(): View
     {
+        // Hanya poktan yang sudah disetujui admin yang boleh dipilih saat daftar
+        $disetujui = Poktan::where('status', 'disetujui')->orderBy('nama_kelompok')->get();
+
         return view('auth.register', [
-            'poktans'  => Poktan::orderBy('nama_kelompok')->get(),
-            'konsumen' => self::KONSUMEN,
+            'poktans'           => $disetujui,
+            'poktans_disetujui' => $disetujui, // alias, jaga-jaga kalau view memakai nama ini
+            'konsumen'          => self::KONSUMEN,
         ]);
     }
 
@@ -45,14 +49,16 @@ class RegisteredUserController extends Controller
             'alamat'            => ['required', 'string', 'max:500'],
             'konsumen_pengguna' => ['required', Rule::in(array_keys(self::KONSUMEN))],
             'jenis_usaha'       => ['required', 'string', 'max:255'],
-            'nama_kapal'        => ['nullable', 'string', 'max:255'],
-            'poktan_id'         => ['required', 'exists:poktans,id'],
+            'nama_kapal'        => ['nullable', 'required_if:konsumen_pengguna,usaha_perikanan', 'string', 'max:255'],
+            // Opsional: yang belum punya poktan bisa mengajukan poktan baru setelah login
+            'poktan_id'         => ['nullable', Rule::exists('poktans', 'id')->where('status', 'disetujui')],
             'email'             => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'password'          => ['required', 'confirmed', Rules\Password::defaults()],
         ], [
             'nik.digits'  => 'NIK harus 16 digit angka.',
             'nik.unique'  => 'NIK sudah terdaftar.',
             'no_hp.regex' => 'Format No. HP tidak valid (contoh: 081234567890).',
+            'nama_kapal.required_if' => 'Nama kapal wajib diisi untuk usaha perikanan.',
         ]);
 
         $user = User::create([
@@ -63,7 +69,7 @@ class RegisteredUserController extends Controller
             'konsumen_pengguna' => $data['konsumen_pengguna'],
             'jenis_usaha'       => $data['jenis_usaha'],
             'nama_kapal'        => $data['nama_kapal'] ?? null,
-            'poktan_id'         => $data['poktan_id'],
+            'poktan_id'         => $data['poktan_id'] ?? null,
             'email'             => $data['email'],
             'password'          => Hash::make($data['password']),
             'role'              => 'user',

@@ -24,28 +24,22 @@
 
     <div class="bg-white border border-[#E1DCC9] rounded-2xl p-6 space-y-5">
 
-        @if ($data->status === 'diterima' && $data->file_surat_resmi)
-            <div class="flex items-center justify-between bg-[#EFF6F0] border border-[#2D6A4F]/30 rounded-xl p-4">
-                <div>
-                    <p class="text-sm font-medium text-[#1B4332]">Nomor Surat: {{ $data->nomor_surat ?? '-' }}</p>
-                    <p class="text-xs text-[#5C6B62] mt-1">
-                        Disetujui {{ $data->disetujui_at?->format('d M Y') ?? '-' }}
-                        @if ($data->disetujuiOleh) oleh {{ $data->disetujuiOleh->name }} @endif
-                    </p>
-                </div>
-                <a href="{{ asset('storage/' . $data->file_surat_resmi) }}" target="_blank" class="bg-[#1B4332] text-white text-sm px-4 py-2 rounded-full flex items-center gap-2 whitespace-nowrap">
-                    <i class="bi bi-download"></i> Unduh PDF
-                </a>
+        @if ($data->status === 'diterima' && $data->file_surat_resmi && $data->diserahkan_at)
+            {{-- blok unduh yang sudah ada, tidak diubah --}}
+        @elseif ($data->status === 'diproses' && $data->nomor_surat)
+            <div class="bg-sky-50 border border-sky-200 rounded-xl p-4">
+                <p class="text-sm font-medium text-sky-800">Pengajuan disetujui. Surat sedang diproses.</p>
+                <p class="text-sm text-sky-700 mt-1">
+                    @if ($data->ttd_kembali_at) Surat sudah bertanda tangan dan akan segera dikirim ke kamu.
+                    @elseif ($data->ttd_dikirim_at) Surat sedang menunggu tanda tangan ketua.
+                    @else Admin sedang menyiapkan surat untuk ditandatangani. @endif
+                </p>
+                <p class="text-xs text-sky-700 mt-1">Nomor surat: {{ $data->nomor_surat }}</p>
             </div>
         @elseif ($data->status === 'ditolak')
-            <div class="bg-red-50 border border-red-200 rounded-xl p-4">
-                <p class="text-sm font-medium text-red-800">Pengajuan ditolak</p>
-                <p class="text-sm text-red-700 mt-1">{{ $data->catatan_admin ?? 'Tidak ada catatan dari admin.' }}</p>
-            </div>
+            {{-- blok ditolak yang sudah ada --}}
         @else
-            <div class="bg-amber-50 border border-amber-200 rounded-xl p-4">
-                <p class="text-sm text-amber-800">Surat resmi belum diterbitkan. Status saat ini: <b>{{ ucfirst($data->status) }}</b>.</p>
-            </div>
+            {{-- blok "belum diterbitkan" yang sudah ada --}}
         @endif
 
         @if ($data->catatan_admin && $data->status !== 'ditolak')

@@ -16,48 +16,20 @@
     </div>
 
     {{-- Kartu Ringkasan --}}
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-
-        <div class="bg-white border border-[#E1DCC9] rounded-xl p-4">
-            <p class="text-xs text-[#5C6B62]">
-                Total Warga Terdaftar
-            </p>
-
-            <p class="text-2xl font-semibold text-[#1B4332] mt-1">
-                {{ $totalUser }}
-            </p>
-        </div>
-
-        <div class="bg-white border border-[#E1DCC9] rounded-xl p-4">
-            <p class="text-xs text-[#5C6B62]">
-                Pengajuan Solar
-            </p>
-
-            <p class="text-2xl font-semibold text-[#1B4332] mt-1">
-                {{ $totalSuratSolar }}
-            </p>
-        </div>
-
-        <div class="bg-white border border-[#E1DCC9] rounded-xl p-4">
-            <p class="text-xs text-[#5C6B62]">
-                Solar Menunggu
-            </p>
-
-            <p class="text-2xl font-semibold text-yellow-700 mt-1">
-                {{ $suratPending }}
-            </p>
-        </div>
-
-        <div class="bg-white border border-[#E1DCC9] rounded-xl p-4">
-            <p class="text-xs text-[#5C6B62]">
-                Kritik/Saran Menunggu
-            </p>
-
-            <p class="text-2xl font-semibold text-yellow-700 mt-1">
-                {{ $kritikPending }}
-            </p>
-        </div>
-
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+        @foreach ([
+            ['Warga Terdaftar', $totalUser, 'text-[#1B4332]'],
+            ['Solar Menunggu', $solarPending, 'text-yellow-700'],
+            ['Pupuk Menunggu', $pupukPending, 'text-yellow-700'],
+            ['Poktan Menunggu', $poktanPending, 'text-yellow-700'],
+            ['Total Solar', $totalSuratSolar, 'text-[#1B4332]'],
+            ['Total Pupuk', $totalSuratPupuk, 'text-[#1B4332]'],
+        ] as [$label, $nilai, $warna])
+            <div class="bg-white border border-[#E1DCC9] rounded-xl p-4">
+                <p class="text-xs text-[#5C6B62]">{{ $label }}</p>
+                <p class="text-2xl font-semibold {{ $warna }} mt-1">{{ $nilai }}</p>
+            </div>
+        @endforeach
     </div>
 
 
@@ -115,7 +87,7 @@
 
             @empty
 
-                <p class="text-sm text-[#5C6B62]">
+                <p class="text-sm text-[#5C6B62
                     Belum ada pengajuan.
                 </p>
 

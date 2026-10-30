@@ -27,5 +27,14 @@ class UserRoleSeeder extends Seeder
                 'role' => 'user',
             ]
         );
+
+        User::updateOrCreate(
+            ['email' => 'ketua@test.com'],
+            [
+                'name' => 'Ketua Test',
+                'password' => Hash::make('password'),
+                'role' => 'ketua',
+            ]
+        );
     }
 }

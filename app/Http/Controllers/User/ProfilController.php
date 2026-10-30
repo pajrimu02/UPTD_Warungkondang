@@ -22,7 +22,7 @@ class ProfilController extends Controller
     {
         return view('user.profil.edit', [
             'user'     => auth()->user(),
-            'poktans'  => Poktan::orderBy('nama_kelompok')->get(),
+            'poktans' => Poktan::where('status', 'disetujui')->orderBy('nama_kelompok')->get(),
             'konsumen' => RegisteredUserController::KONSUMEN,
         ]);
     }
@@ -32,6 +32,7 @@ class ProfilController extends Controller
         $user = auth()->user();
 
         $validated = $request->validate([
+            'poktan_id' => ['nullable', Rule::exists('poktans', 'id')->where('status', 'disetujui')],
             'name'              => ['required', 'string', 'max:255'],
             'email'             => ['required', 'email', Rule::unique('users', 'email')->ignore($user->id)],
             'nik'               => ['nullable', 'digits:16', Rule::unique('users', 'nik')->ignore($user->id)],

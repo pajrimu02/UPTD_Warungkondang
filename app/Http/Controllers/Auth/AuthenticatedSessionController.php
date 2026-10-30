@@ -30,6 +30,7 @@ class AuthenticatedSessionController extends Controller
         return match ($request->user()->role) {
             'admin' => redirect()->route('admin.dashboard'),
             'user'  => redirect()->route('user.dashboard'),
+            'ketua' => redirect()->route('ketua.dashboard'),
             default => redirect()->intended('/'),
         };
     }
