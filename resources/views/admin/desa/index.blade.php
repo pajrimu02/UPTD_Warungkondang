@@ -40,7 +40,13 @@
                         <button type="submit" class="text-sm text-red-600 px-3 py-2">Hapus</button>
                     </form>
                 </div>
-                <p class="text-xs text-[#5C6B62] mt-2">{{ $d->poktans_count }} poktan · terpakai {{ number_format($d->terpakaiHa(), 2, ',', '.') }} ha · sisa {{ number_format($d->sisaHa(), 2, ',', '.') }} ha</p>
+                <p class="text-xs text-[#5C6B62] mt-2">
+                    {{ $d->poktans_count }} poktan · terpakai {{ number_format($d->terpakaiHa(), 2, ',', '.') }} ha ·
+                    sisa {{ number_format($d->sisaHa(), 2, ',', '.') }} ha
+                    @if ($d->memakaiBatasBawaan())
+                        <span class="ml-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">memakai batas bawaan {{ number_format($d->batasHa(), 0, ',', '.') }} ha, isi LBS resmi</span>
+                    @endif
+                </p>
             </div>
         @empty
             <div class="px-6 py-14 text-center"><p class="text-sm text-[#5C6B62]">Belum ada desa.</p></div>

@@ -105,6 +105,11 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::put('/surat-pupuk/{suratPupuk}', [AdminSuratPupukController::class, 'update'])->name('surat-pupuk.update');
     Route::get('/surat-pupuk/{suratPupuk}/lembar-kerja', [AdminSuratPupukController::class, 'lembarKerja'])->name('surat-pupuk.lembar-kerja');
     Route::post('/surat-pupuk/{suratPupuk}/upload-surat', [AdminSuratPupukController::class, 'uploadSurat'])->name('surat-pupuk.upload-surat');
+    Route::get('/surat-pupuk/{suratPupuk}/kelola', [AdminSuratPupukController::class, 'kelola'])->name('surat-pupuk.kelola');
+    Route::post('/surat-pupuk/{suratPupuk}/tahap', [AdminSuratPupukController::class, 'tahap'])->name('surat-pupuk.tahap');
+    Route::get('/surat-pupuk/{suratPupuk}/surat', [AdminSuratPupukController::class, 'surat'])->name('surat-pupuk.surat');
+    Route::delete('/surat-pupuk/{suratPupuk}', [AdminSuratPupukController::class, 'destroy'])->name('surat-pupuk.destroy');
+    
     Route::get('/surat-pengajuan', [AdminSuratPengajuanController::class, 'index'])->name('surat-pengajuan.index');
     Route::get('/poktan', [AdminPoktanController::class, 'index'])->name('poktan.index');
     Route::get('/poktan/{poktan}', [AdminPoktanController::class, 'show'])->name('poktan.show');
@@ -134,6 +139,12 @@ Route::middleware(['auth', 'role:ketua'])->prefix('ketua')->name('ketua.')->grou
     Route::get('/surat/solar/{suratSolar}/cetak', [KetuaSuratController::class, 'cetakSolar'])->name('surat.cetak-solar');
     Route::post('/surat/solar/{suratSolar}/upload', [KetuaSuratController::class, 'uploadSolar'])->name('surat.upload-solar');
     Route::get('/rekap', [KetuaSuratController::class, 'rekap'])->name('rekap');
+    Route::get('/surat/pupuk/{suratPupuk}/cetak', [KetuaSuratController::class, 'cetakPupuk'])->name('surat.cetak-pupuk');
+    Route::post('/surat/pupuk/{suratPupuk}/upload', [KetuaSuratController::class, 'uploadPupuk'])->name('surat.upload-pupuk');
+    Route::get('/surat/{jenis}/{id}/scan', [KetuaSuratController::class, 'scan'])
+    ->whereIn('jenis', ['solar', 'pupuk'])->whereNumber('id')->name('surat.scan');
+    Route::delete('/surat/{jenis}/{id}/scan', [KetuaSuratController::class, 'hapusScan'])
+    ->whereIn('jenis', ['solar', 'pupuk'])->whereNumber('id')->name('surat.hapus-scan');
 });
 
 require __DIR__.'/auth.php';

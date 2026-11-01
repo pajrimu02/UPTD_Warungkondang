@@ -7,10 +7,19 @@
     @php
         $inputClass = 'w-full rounded-lg border border-[#E1DCC9] px-3.5 py-2.5 text-sm focus:outline-none focus:border-[#2D6A4F] focus:ring-2 focus:ring-[#2D6A4F]/20';
         $fmt = fn ($n) => number_format($n, 2, ',', '.');
+
         $total = (float) $poktan->anggota->sum('luas_lahan_ha');
-        $sisa = (float) ($poktan->desa?->sisaHa() ?? 0);
-        $persen = $sisa > 0 ? min(100, round($total / $sisa * 100)) : ($total > 0 ? 100 : 0);
-        $lebih = $total > $sisa;
+        $batasPoktan = (float) $batasLuas;
+        $sisaPoktan = max(0, $batasPoktan - $total);
+        $persen = $batasPoktan > 0 ? min(100, round($total / $batasPoktan * 100)) : 0;
+
+        $desa = $poktan->desa;
+        $batasDesa = $desa?->batasHa();
+        $sisaDesa = $batasDesa !== null ? $desa->sisaHa() : null;
+
+        $lebihPoktan = $total > $batasPoktan;
+        $lebihDesa = $sisaDesa !== null && $total > $sisaDesa;
+
         $adaKetua = $poktan->anggota->contains('jabatan', 'ketua');
         $warnaJabatan = [
             'ketua' => 'bg-[#F6EDC9] text-[#7A5C12]',
@@ -26,7 +35,7 @@
     </a>
 
     <h1 class="text-2xl font-semibold text-[#1B4332] mb-1">{{ $poktan->nama_kelompok }}</h1>
-    <p class="text-sm text-[#5C6B62] mb-6"><i class="bi bi-geo-alt"></i> {{ $poktan->desa->nama ?? '-' }}</p>
+    <p class="text-sm text-[#5C6B62] mb-6"><i class="bi bi-geo-alt"></i> {{ $desa->nama ?? '-' }}</p>
 
     @include('user.poktan._stepper', ['aktif' => 2])
 
@@ -36,17 +45,29 @@
             <p class="text-xs text-[#8C9086]">Anggota</p>
             <p class="font-serif text-2xl text-[#1B4332] mt-1">{{ $poktan->anggota->count() }}</p>
         </div>
+
         <div class="bg-white border border-[#E1DCC9] rounded-2xl p-5">
             <p class="text-xs text-[#8C9086]">Total luas lahan</p>
-            <p class="font-serif text-2xl {{ $lebih ? 'text-red-600' : 'text-[#1B4332]' }} mt-1">{{ $fmt($total) }} ha</p>
-        </div>
-        <div class="bg-white border border-[#E1DCC9] rounded-2xl p-5">
-            <p class="text-xs text-[#8C9086]">Sisa LBS desa</p>
-            <p class="font-serif text-2xl text-[#1B4332] mt-1">{{ $fmt($sisa) }} ha</p>
+            <p class="font-serif text-2xl {{ $lebihPoktan ? 'text-red-600' : 'text-[#1B4332]' }} mt-1">{{ $fmt($total) }} ha</p>
             <div class="h-2 rounded-full bg-[#EAF2EC] mt-3 overflow-hidden">
-                <div class="h-full rounded-full {{ $lebih ? 'bg-red-500' : 'bg-[#2D6A4F]' }}" style="width: {{ $persen }}%"></div>
+                <div class="h-full rounded-full {{ $lebihPoktan ? 'bg-red-500' : 'bg-[#2D6A4F]' }}" style="width: {{ $persen }}%"></div>
             </div>
-            <p class="text-[11px] mt-1.5 {{ $lebih ? 'text-red-600' : 'text-[#8C9086]' }}">{{ $lebih ? 'Melebihi sisa LBS' : $persen . '% terpakai' }}</p>
+            <p class="text-[11px] mt-1.5 {{ $lebihPoktan ? 'text-red-600' : 'text-[#8C9086]' }}">
+                {{ $lebihPoktan ? 'Melebihi batas' : 'Sisa ' . $fmt($sisaPoktan) . ' ha' }} · maksimal {{ $fmt($batasPoktan) }} ha per poktan
+            </p>
+        </div>
+
+        <div class="bg-white border border-[#E1DCC9] rounded-2xl p-5">
+            <p class="text-xs text-[#8C9086]">Sisa batas desa</p>
+            @if ($sisaDesa !== null)
+                <p class="font-serif text-2xl {{ $lebihDesa ? 'text-red-600' : 'text-[#1B4332]' }} mt-1">{{ $fmt($sisaDesa) }} ha</p>
+                <p class="text-[11px] mt-3 {{ $lebihDesa ? 'text-red-600' : 'text-[#8C9086]' }}">
+                    {{ $lebihDesa ? 'Total lahan melebihi sisa desa' : ($desa->memakaiBatasBawaan() ? 'Batas sementara desa ' . $desa->nama : 'Luas baku sawah desa ' . $desa->nama) }}
+                </p>
+            @else
+                <p class="font-serif text-2xl text-[#8C9086] mt-1">—</p>
+                <p class="text-[11px] mt-3 text-[#8C9086]">Belum ada batas desa</p>
+            @endif
         </div>
     </div>
 
@@ -62,6 +83,9 @@
                             <span class="text-[11px] font-semibold uppercase tracking-wide rounded-full px-2.5 py-0.5 {{ $warnaJabatan[$a->jabatan] ?? $warnaJabatan['anggota'] }}">{{ $a->jabatan }}</span>
                         </div>
                         <p class="text-xs text-[#5C6B62] mt-1">NIK {{ $a->nik }} · {{ $a->no_hp }} · {{ $fmt($a->luas_lahan_ha) }} ha</p>
+                        @if ($a->tempat_lahir)
+                            <p class="text-xs text-[#5C6B62] mt-0.5">{{ $a->tempat_lahir }}, {{ $a->tanggal_lahir?->format('d-m-Y') }} · Ibu: {{ $a->nama_ibu_kandung }}</p>
+                        @endif
                         <p class="text-xs text-[#8C9086] mt-0.5">{{ $a->alamat }}</p>
                     </div>
                     <form method="POST" action="{{ route('user.poktan.anggota.destroy', [$poktan, $a]) }}" onsubmit="return confirm('Hapus anggota ini?')">
@@ -85,76 +109,112 @@
     </div>
 
     {{-- Form tambah anggota --}}
-    <form method="POST" action="{{ route('user.poktan.anggota.store', $poktan) }}" enctype="multipart/form-data" class="bg-white border border-[#E1DCC9] rounded-2xl p-6 space-y-4">
-        @csrf
-        <div class="flex items-center justify-between gap-3 flex-wrap">
-            <h2 class="font-semibold text-[#1B4332]"><i class="bi bi-person-plus"></i> Tambah Anggota</h2>
-            @unless ($adaKetua)
-                <button type="button" id="isi-saya"
-                        data-nama="{{ auth()->user()->name }}" data-nik="{{ auth()->user()->nik }}" data-hp="{{ auth()->user()->no_hp }}"
-                        class="text-xs font-semibold text-[#2D6A4F] border border-[#2D6A4F]/40 rounded-full px-3 py-1.5 hover:bg-[#EAF2EC]">
-                    Isi dengan data saya (sebagai ketua)
-                </button>
-            @endunless
-        </div>
+    <div id="form-anggota">
 
-        <div class="grid sm:grid-cols-2 gap-4">
-            <div>
-                <label class="block text-sm mb-1.5">Nama Lengkap *</label>
-                <input id="f-nama" type="text" name="nama" value="{{ old('nama') }}" class="{{ $inputClass }}">
-                @error('nama') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+        @if (session('anggota_status'))
+            <div class="mb-4 flex items-start gap-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3.5 text-sm">
+                <i class="bi bi-check-circle-fill mt-0.5"></i>
+                <span>{{ session('anggota_status') }}</span>
             </div>
-            <div>
-                <label class="block text-sm mb-1.5">NIK *</label>
-                <input id="f-nik" type="text" name="nik" maxlength="16" value="{{ old('nik') }}" class="{{ $inputClass }}">
-                @error('nik') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-            </div>
-            <div>
-                <label class="block text-sm mb-1.5">No. HP/WA *</label>
-                <input id="f-hp" type="text" name="no_hp" value="{{ old('no_hp') }}" class="{{ $inputClass }}">
-                @error('no_hp') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-            </div>
-            <div>
-                <label class="block text-sm mb-1.5">Jabatan *</label>
-                <select id="f-jabatan" name="jabatan" class="{{ $inputClass }} bg-white">
-                    @foreach (['ketua' => 'Ketua', 'sekretaris' => 'Sekretaris', 'bendahara' => 'Bendahara', 'anggota' => 'Anggota'] as $v => $l)
-                        <option value="{{ $v }}" @disabled($v === 'ketua' && $adaKetua) @selected(old('jabatan', $adaKetua ? 'anggota' : 'ketua') === $v)>{{ $l }}</option>
+        @endif
+
+        @if ($errors->any())
+            <div class="mb-4 rounded-2xl bg-red-50 border border-red-200 text-red-800 px-4 py-3.5 text-sm">
+                <p class="font-medium mb-1"><i class="bi bi-exclamation-triangle-fill"></i> Anggota belum tersimpan. Perbaiki yang berikut:</p>
+                <ul class="list-disc ml-5 space-y-0.5">
+                    @foreach ($errors->all() as $pesan)
+                        <li>{{ $pesan }}</li>
                     @endforeach
-                </select>
-                @error('jabatan') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                </ul>
             </div>
-            <div class="sm:col-span-2">
-                <label class="block text-sm mb-1.5">Alamat *</label>
-                <input type="text" name="alamat" value="{{ old('alamat') }}" class="{{ $inputClass }}">
-                @error('alamat') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-            </div>
-            <div>
-                <label class="block text-sm mb-1.5">Luas Lahan Sawah (ha) sesuai SPPT *</label>
-                <input type="number" step="0.01" min="0.01" name="luas_lahan_ha" value="{{ old('luas_lahan_ha') }}" class="{{ $inputClass }}">
-                @error('luas_lahan_ha') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-            </div>
-        </div>
+        @endif
 
-        <div class="space-y-3 pt-1">
-            @foreach ($berkas as $field => $label)
+        <form method="POST" action="{{ route('user.poktan.anggota.store', $poktan) }}#form-anggota" enctype="multipart/form-data" class="bg-white border border-[#E1DCC9] rounded-2xl p-6 space-y-4">
+            @csrf
+            <div class="flex items-center justify-between gap-3 flex-wrap">
+                <h2 class="font-semibold text-[#1B4332]"><i class="bi bi-person-plus"></i> Tambah Anggota</h2>
+                @unless ($adaKetua)
+                    <button type="button" id="isi-saya"
+                            data-nama="{{ auth()->user()->name }}" data-nik="{{ auth()->user()->nik }}" data-hp="{{ auth()->user()->no_hp }}" data-alamat="{{ auth()->user()->alamat }}"
+                            class="text-xs font-semibold text-[#2D6A4F] border border-[#2D6A4F]/40 rounded-full px-3 py-1.5 hover:bg-[#EAF2EC]">
+                        Isi dengan data saya (sebagai ketua)
+                    </button>
+                @endunless
+            </div>
+
+            <div class="grid sm:grid-cols-2 gap-4">
                 <div>
-                    <label class="flex items-center gap-3 border border-dashed border-[#E1DCC9] rounded-xl px-4 py-3.5 cursor-pointer hover:border-[#2D6A4F] transition-colors">
-                        <i class="bi bi-cloud-arrow-up text-xl text-[#5C6B62]"></i>
-                        <span class="text-sm text-[#5C6B62] truncate">{{ $label }} *</span>
-                        <input type="file" name="{{ $field }}" required accept=".jpg,.jpeg,.png,.pdf" data-label="{{ $label }} *" class="sr-only">
-                    </label>
-                    @error($field) <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                    <label class="block text-sm mb-1.5">Nama Lengkap *</label>
+                    <input id="f-nama" type="text" name="nama" value="{{ old('nama') }}" class="{{ $inputClass }}">
+                    @error('nama') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                 </div>
-            @endforeach
-            <p class="text-xs text-[#8C9086]">JPG, PNG, atau PDF, maksimal 2 MB per berkas.</p>
-        </div>
+                <div>
+                    <label class="block text-sm mb-1.5">NIK *</label>
+                    <input id="f-nik" type="text" name="nik" maxlength="16" inputmode="numeric" value="{{ old('nik') }}" class="{{ $inputClass }}">
+                    @error('nik') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                </div>
+                <div>
+                    <label class="block text-sm mb-1.5">Tempat Lahir *</label>
+                    <input type="text" name="tempat_lahir" value="{{ old('tempat_lahir') }}" class="{{ $inputClass }}">
+                    @error('tempat_lahir') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                </div>
+                <div>
+                    <label class="block text-sm mb-1.5">Tanggal Lahir *</label>
+                    <input type="date" name="tanggal_lahir" value="{{ old('tanggal_lahir') }}" class="{{ $inputClass }}">
+                    @error('tanggal_lahir') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                </div>
+                <div class="sm:col-span-2">
+                    <label class="block text-sm mb-1.5">Nama Ibu Kandung *</label>
+                    <input type="text" name="nama_ibu_kandung" value="{{ old('nama_ibu_kandung') }}" class="{{ $inputClass }}">
+                    @error('nama_ibu_kandung') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                </div>
+                <div>
+                    <label class="block text-sm mb-1.5">No. HP/WA *</label>
+                    <input id="f-hp" type="text" name="no_hp" value="{{ old('no_hp') }}" class="{{ $inputClass }}">
+                    @error('no_hp') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                </div>
+                <div>
+                    <label class="block text-sm mb-1.5">Jabatan *</label>
+                    <select id="f-jabatan" name="jabatan" class="{{ $inputClass }} bg-white">
+                        @foreach (['ketua' => 'Ketua', 'sekretaris' => 'Sekretaris', 'bendahara' => 'Bendahara', 'anggota' => 'Anggota'] as $v => $l)
+                            <option value="{{ $v }}" @disabled($v === 'ketua' && $adaKetua) @selected(old('jabatan', $adaKetua ? 'anggota' : 'ketua') === $v)>{{ $l }}</option>
+                        @endforeach
+                    </select>
+                    @error('jabatan') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                </div>
+                <div class="sm:col-span-2">
+                    <label class="block text-sm mb-1.5">Alamat *</label>
+                    <input id="f-alamat" type="text" name="alamat" value="{{ old('alamat') }}" class="{{ $inputClass }}">
+                    @error('alamat') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                </div>
+                <div>
+                    <label class="block text-sm mb-1.5">Luas Lahan Sawah (ha) sesuai SPPT *</label>
+                    <input type="number" step="0.01" min="0.01" name="luas_lahan_ha" value="{{ old('luas_lahan_ha') }}" class="{{ $inputClass }}">
+                    @error('luas_lahan_ha') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                </div>
+            </div>
 
-        <div class="flex justify-end">
-            <button type="submit" class="inline-flex items-center gap-2 bg-[#2D6A4F] hover:bg-[#1B4332] text-white text-sm px-6 py-2.5 rounded-full transition">
-                <i class="bi bi-plus-lg"></i> Simpan Anggota
-            </button>
-        </div>
-    </form>
+            <div class="space-y-3 pt-1">
+                @foreach ($berkas as $field => $label)
+                    <div>
+                        <label class="flex items-center gap-3 border border-dashed border-[#E1DCC9] rounded-xl px-4 py-3.5 cursor-pointer hover:border-[#2D6A4F] transition-colors">
+                            <i class="bi bi-cloud-arrow-up text-xl text-[#5C6B62]"></i>
+                            <span class="text-sm text-[#5C6B62] truncate">{{ $label }} *</span>
+                            <input type="file" name="{{ $field }}" required accept=".jpg,.jpeg,.png,.pdf" data-label="{{ $label }} *" class="sr-only">
+                        </label>
+                        @error($field) <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                    </div>
+                @endforeach
+                <p class="text-xs text-[#8C9086]">JPG, PNG, atau PDF, maksimal 2 MB per berkas.</p>
+            </div>
+
+            <div class="flex justify-end">
+                <button type="submit" class="inline-flex items-center gap-2 bg-[#2D6A4F] hover:bg-[#1B4332] text-white text-sm px-6 py-2.5 rounded-full transition">
+                    <i class="bi bi-plus-lg"></i> Simpan Anggota
+                </button>
+            </div>
+        </form>
+    </div>
 
     {{-- Selesai --}}
     <div class="mt-8 bg-white border border-[#E1DCC9] rounded-2xl p-6">
@@ -174,8 +234,8 @@
         @else
             <p class="font-semibold text-[#14231C]">Belum bisa diajukan</p>
             <ul class="mt-2 space-y-1.5">
-                @foreach ($alasan as $a)
-                    <li class="text-sm text-amber-800 flex gap-2"><i class="bi bi-exclamation-circle mt-0.5"></i><span>{{ $a }}</span></li>
+                @foreach ($alasan as $pesanAlasan)
+                    <li class="text-sm text-amber-800 flex gap-2"><i class="bi bi-exclamation-circle mt-0.5"></i><span>{{ $pesanAlasan }}</span></li>
                 @endforeach
             </ul>
             <button type="button" disabled class="mt-4 bg-[#1B4332] opacity-40 text-white text-sm font-semibold px-6 py-3 rounded-full cursor-not-allowed">Selesai & Ajukan</button>
@@ -204,6 +264,7 @@
                     document.getElementById('f-nama').value = tombol.dataset.nama || '';
                     document.getElementById('f-nik').value = tombol.dataset.nik || '';
                     document.getElementById('f-hp').value = tombol.dataset.hp || '';
+                    document.getElementById('f-alamat').value = tombol.dataset.alamat || '';
                     document.getElementById('f-jabatan').value = 'ketua';
                 });
             }

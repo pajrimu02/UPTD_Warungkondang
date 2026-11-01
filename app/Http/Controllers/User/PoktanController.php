@@ -17,6 +17,11 @@ class PoktanController extends Controller
     // TODO: konfirmasi jumlah minimal anggota resmi ke UPTD
     private const MIN_ANGGOTA = 1;
 
+    private function batasLuas(): float
+    {
+        return (float) config('uptd.maks_luas_poktan_ha', 25);
+    }
+
     public function index(Request $request): View
     {
         $user = $request->user();
@@ -91,7 +96,10 @@ class PoktanController extends Controller
         $this->muat($poktan);
         [$siap, $alasan] = $this->cekKesiapan($poktan);
 
-        return view('user.poktan.anggota', compact('poktan', 'siap', 'alasan'));
+        $batasLuas = $this->batasLuas();
+        $totalLuas = (float) $poktan->anggota->sum('luas_lahan_ha');
+
+        return view('user.poktan.anggota', compact('poktan', 'siap', 'alasan', 'batasLuas', 'totalLuas'));
     }
 
     public function anggotaStore(Request $request, Poktan $poktan): RedirectResponse
@@ -102,6 +110,9 @@ class PoktanController extends Controller
         $data = $request->validate([
             'nama' => ['required', 'string', 'max:255'],
             'nik' => ['required', 'digits:16'],
+            'tempat_lahir' => ['required', 'string', 'max:255'],
+            'tanggal_lahir' => ['required', 'date', 'before:today'],
+            'nama_ibu_kandung' => ['required', 'string', 'max:255'],
             'no_hp' => ['required', 'string', 'max:20'],
             'alamat' => ['required', 'string', 'max:500'],
             'luas_lahan_ha' => ['required', 'numeric', 'min:0.01', 'max:9999'],
@@ -109,10 +120,20 @@ class PoktanController extends Controller
             'file_ktp' => ['required', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:2048'],
             'file_kk' => ['required', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:2048'],
             'file_sppt' => ['required', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:2048'],
-            'tempat_lahir' => ['required', 'string', 'max:255'],
-            'tanggal_lahir' => ['required', 'date', 'before:today'],
-            'nama_ibu_kandung' => ['required', 'string', 'max:255'],    
         ]);
+
+        // Batas total luas lahan per poktan
+        $batas = $this->batasLuas();
+        $terpakai = (float) $poktan->anggota()->sum('luas_lahan_ha');
+
+        if ($terpakai + (float) $data['luas_lahan_ha'] > $batas) {
+            $sisa = max(0, $batas - $terpakai);
+
+            return back()->withErrors([
+                'luas_lahan_ha' => 'Total luas lahan poktan maksimal ' . number_format($batas, 2, ',', '.')
+                    . ' ha. Sisa yang bisa ditambahkan: ' . number_format($sisa, 2, ',', '.') . ' ha.',
+            ])->withInput();
+        }
 
         if ($poktan->anggota()->where('nik', $data['nik'])->exists()) {
             return back()->withErrors(['nik' => 'NIK ini sudah ada di daftar anggota.'])->withInput();
@@ -135,8 +156,8 @@ class PoktanController extends Controller
         }
 
         $poktan->anggota()->create($data);
-
-        return back()->with('status', 'Anggota "' . $data['nama'] . '" ditambahkan.');
+ 
+        return back()->with('anggota_status', 'Anggota "' . $data['nama'] . '" ditambahkan.');
     }
 
     public function anggotaDestroy(Request $request, Poktan $poktan, PoktanAnggota $anggota): RedirectResponse
@@ -146,8 +167,8 @@ class PoktanController extends Controller
 
         Storage::disk('local')->delete(array_filter([$anggota->file_ktp, $anggota->file_kk, $anggota->file_sppt]));
         $anggota->delete();
-
-        return back()->with('status', 'Anggota dihapus.');
+ 
+        return back()->with('anggota_status', 'Anggota dihapus.');
     }
 
     public function selesai(Request $request, Poktan $poktan): RedirectResponse
@@ -238,13 +259,19 @@ class PoktanController extends Controller
             $alasan[] = 'Harus ada tepat 1 ketua.';
         }
 
+        $total = (float) $anggota->sum('luas_lahan_ha');
+        $batas = $this->batasLuas();
+
+        if ($total > $batas) {
+            $alasan[] = 'Total luas lahan (' . $fmt($total) . ' ha) melebihi batas ' . $fmt($batas) . ' ha per poktan.';
+        }
+
         $desa = $poktan->desa;
         if (! $desa) {
             $alasan[] = 'Desa belum dipilih.';
-        } elseif ((float) $desa->luas_baku_sawah_ha <= 0) {
+        } elseif ($desa->batasHa() === null) {           
             $alasan[] = 'Luas baku sawah desa ' . $desa->nama . ' belum diisi admin. Hubungi petugas UPTD.';
         } else {
-            $total = (float) $anggota->sum('luas_lahan_ha');
             $sisa = $desa->sisaHa();
             if ($total > $sisa) {
                 $alasan[] = 'Total luas lahan (' . $fmt($total) . ' ha) melebihi sisa luas baku sawah desa '

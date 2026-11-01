@@ -13,4 +13,6 @@ return [
     'default_nomor_penyalur' => '34.43206',
     'default_alamat_penyalur' => 'Jl. Raya Sukabumi, Ciwalen, Kec. Warungkondang, Kabupaten Cianjur, Jawa Barat 43261',
     'default_alat_pembelian' => 'Jerigen',
+    'maks_luas_poktan_ha' => 25,
+    'default_lbs_desa_ha' => 100,
 ];

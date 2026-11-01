@@ -38,7 +38,7 @@ class PoktanController extends Controller
         return view('admin.poktan.show', [
             'poktan' => $poktan,
             'totalLuas' => (float) $poktan->anggota->sum('luas_lahan_ha'),
-            'sisaDesa' => $poktan->desa?->sisaHa(),
+            'sisaDesa' => ($poktan->desa && $poktan->desa->batasHa() !== null) ? $poktan->desa->sisaHa() : null,
         ]);
     }
 
@@ -58,12 +58,16 @@ class PoktanController extends Controller
         if ($data['keputusan'] === 'disetujui') {
             $poktan->load('desa', 'anggota');
             $total = (float) $poktan->anggota->sum('luas_lahan_ha');
+            $batasPoktan = (float) config('uptd.maks_luas_poktan_ha', 25);
 
-            if (! $poktan->desa || (float) $poktan->desa->luas_baku_sawah_ha <= 0) {
-                return back()->with('error', 'Luas baku sawah desa belum diisi. Lengkapi di menu Data Desa.');
+            if (! $poktan->desa) {
+                return back()->with('error', 'Desa poktan belum dipilih.');
             }
-            if ($total > $poktan->desa->sisaHa()) {
-                return back()->with('error', 'Total luas lahan melebihi sisa luas baku sawah desa.');
+            if ($total > $batasPoktan) {
+                return back()->with('error', 'Total luas lahan melebihi batas ' . $batasPoktan . ' ha per poktan.');
+            }
+            if ($poktan->desa->batasHa() !== null && $total > $poktan->desa->sisaHa()) {
+                return back()->with('error', 'Total luas lahan melebihi sisa batas luas sawah desa.');
             }
         }
 

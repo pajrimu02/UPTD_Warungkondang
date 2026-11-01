@@ -12,6 +12,8 @@ use Illuminate\View\View;
 
 class SuratPupukController extends Controller
 {
+    private const F4 = [0, 0, 609.45, 935.43];
+
     public function index(Request $request): View
     {
         $suratPupuks = SuratPupuk::with('poktan', 'user')->withCount('items')
@@ -33,42 +35,86 @@ class SuratPupukController extends Controller
         ]);
     }
 
+    public function kelola(SuratPupuk $suratPupuk): View
+    {
+        $suratPupuk->load('user', 'poktan.desa', 'disetujuiOleh')->loadCount('items');
+
+        return view('admin.surat-pupuk.kelola', compact('suratPupuk'));
+    }
+
     public function update(Request $request, SuratPupuk $suratPupuk): RedirectResponse
     {
         $validated = $request->validate([
-            'status' => ['required', 'in:diajukan,diproses,diterima,ditolak'],
+            'status' => ['required', 'in:diajukan,diproses,ditolak,diterima'],
             'catatan_admin' => ['nullable', 'string', 'max:1000'],
         ]);
+
+        if ($validated['status'] === 'diterima' && ! $suratPupuk->diserahkan_at) {
+            return back()->withErrors(['status' => 'Status "Diterima" terisi otomatis saat surat dikirim ke petani.'])->withInput();
+        }
 
         if ($validated['status'] === 'ditolak' && blank($validated['catatan_admin'] ?? null)) {
             return back()->withErrors(['catatan_admin' => 'Isi alasan penolakan.'])->withInput();
         }
 
-        if ($validated['status'] === 'diterima' && $suratPupuk->status !== 'diterima') {
+        if ($validated['status'] === 'diproses' && ! $suratPupuk->nomor_surat) {
             $validated['disetujui_oleh'] = auth()->id();
             $validated['disetujui_at'] = now();
-
-            if (! $suratPupuk->nomor_surat) {
-                $validated['nomor_surat'] = SuratPupuk::generateNomorSurat();
-            }
+            $validated['nomor_surat'] = SuratPupuk::generateNomorSurat();
         }
 
         $suratPupuk->update($validated);
 
-        return redirect()->route('admin.surat-pupuk.show', $suratPupuk)
-            ->with('success', 'Status pengajuan pupuk "' . $suratPupuk->poktan->nama_kelompok . '" berhasil diperbarui.');
+        return redirect()->route('admin.surat-pupuk.kelola', $suratPupuk)
+            ->with('success', 'Keputusan pengajuan pupuk "' . $suratPupuk->poktan->nama_kelompok . '" disimpan.');
     }
 
+    public function tahap(Request $request, SuratPupuk $suratPupuk): RedirectResponse
+    {
+        $aksi = $request->validate([
+            'aksi' => ['required', 'in:kirim_ketua,serahkan'],
+        ])['aksi'];
+
+        $s = $suratPupuk;
+
+        if ($aksi === 'kirim_ketua') {
+            if (! in_array($s->status, ['diproses', 'diterima'], true) || ! $s->nomor_surat) {
+                return back()->with('error', 'Pilih status Diproses dan simpan keputusan dulu.');
+            }
+
+            $s->update(['ttd_dikirim_at' => now()]);
+
+            return back()->with('success', 'Surat dikirim ke ketua untuk ditandatangani.');
+        }
+
+        if (! $s->ttd_kembali_at || ! $s->file_surat_resmi) {
+            return back()->with('error', 'Scan surat bertanda tangan belum ada.');
+        }
+
+        $s->update(['status' => 'diterima', 'diserahkan_at' => now()]);
+
+        return back()->with('success', 'Surat dikirim ke petani. Status pengajuan kini Diterima.');
+    }
+
+   
+    public function surat(SuratPupuk $suratPupuk)
+    {
+        $suratPupuk->load('poktan.desa', 'items');
+
+        return Pdf::loadView('pdf.surat-rekomendasi-pupuk', compact('suratPupuk'))
+            ->setPaper(self::F4)
+            ->stream('Surat-Rekomendasi-Pupuk-' . $suratPupuk->id . '.pdf');
+    }
+
+   
     public function lembarKerja(SuratPupuk $suratPupuk)
     {
         $suratPupuk->load('user', 'poktan.desa', 'items');
 
-        $pdf = Pdf::loadView('admin.surat-pupuk.lembar-kerja', [
+        return Pdf::loadView('admin.surat-pupuk.lembar-kerja', [
             'suratPupuk' => $suratPupuk,
             'rekap' => $this->rekap($suratPupuk),
-        ])->setPaper('a4', 'landscape');
-
-        return $pdf->stream('Lembar-Kerja-Pupuk-' . $suratPupuk->id . '.pdf');
+        ])->setPaper('a4', 'landscape')->stream('Lembar-Kerja-Pupuk-' . $suratPupuk->id . '.pdf');
     }
 
     public function uploadSurat(Request $request, SuratPupuk $suratPupuk): RedirectResponse
@@ -83,13 +129,28 @@ class SuratPupukController extends Controller
 
         $suratPupuk->update([
             'file_surat_resmi' => $request->file('file_surat_resmi')->store('surat-resmi-pupuk', 'public'),
+            'ttd_kembali_at' => $suratPupuk->ttd_kembali_at ?? now(), // cadangan jika ketua tidak mengunggah sendiri
         ]);
 
-        return redirect()->route('admin.surat-pupuk.show', $suratPupuk)
-            ->with('success', 'Surat resmi berhasil diarsipkan.');
+        return redirect()->route('admin.surat-pupuk.kelola', $suratPupuk)
+            ->with('success', 'Scan surat berhasil diarsipkan.');
     }
 
-    /** Total tiap jenis pupuk per musim tanam: $rekap[musim 0..2][kunci] */
+    public function destroy(SuratPupuk $suratPupuk): RedirectResponse
+    {
+        $nama = $suratPupuk->poktan->nama_kelompok;
+
+        if ($suratPupuk->file_surat_resmi) {
+            Storage::disk('public')->delete($suratPupuk->file_surat_resmi);
+        }
+
+        $suratPupuk->delete();
+
+        return redirect()->route('admin.surat-pupuk.index')
+            ->with('success', 'Pengajuan pupuk "' . $nama . '" dihapus.');
+    }
+
+   
     private function rekap(SuratPupuk $surat): array
     {
         $rekap = [];

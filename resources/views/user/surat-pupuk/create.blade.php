@@ -7,6 +7,7 @@
     @php
         $inputClass = 'w-full rounded-lg border border-[#E1DCC9] px-3.5 py-2.5 text-sm focus:outline-none focus:border-[#2D6A4F] focus:ring-2 focus:ring-[#2D6A4F]/20';
         $pupuk = ['luas' => 'Luas (Ha)', 'urea' => 'Urea (kg)', 'sp36' => 'SP36 (kg)', 'za' => 'ZA (kg)', 'npk' => 'NPK (kg)', 'organik' => 'Organik (kg)'];
+        $subsektor = ['Tanaman Pangan', 'Hortikultura', 'Perkebunan', 'Peternakan', 'Petambak'];
     @endphp
 
     <a href="{{ route('user.surat-pupuk.index') }}" class="flex items-center gap-1.5 text-sm text-[#5C6B62] mb-4">
@@ -76,7 +77,6 @@
                         ['tempat_lahir', 'Tempat Lahir *', 'text', $a->tempat_lahir],
                         ['tanggal_lahir', 'Tanggal Lahir *', 'date', $a->tanggal_lahir?->format('Y-m-d')],
                         ['nama_ibu_kandung', 'Nama Ibu Kandung *', 'text', $a->nama_ibu_kandung],
-                        ['subsektor', 'Subsektor *', 'text', 'Tanaman Pangan'],
                     ] as [$f, $label, $tipe, $default])
                         <div>
                             <label class="block text-sm mb-1.5">{{ $label }}</label>
@@ -85,6 +85,17 @@
                             @error("items.$k.$f") <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
                     @endforeach
+
+                    <div>
+                        <label class="block text-sm mb-1.5">Subsektor *</label>
+                        <select name="items[{{ $k }}][subsektor]" class="{{ $inputClass }} bg-white">
+                            @foreach ($subsektor as $opsi)
+                                <option value="{{ $opsi }}" @selected(old("items.$k.subsektor", 'Tanaman Pangan') === $opsi)>{{ $opsi }}</option>
+                            @endforeach
+                        </select>
+                        @error("items.$k.subsektor") <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                    </div>
+
                     <div class="sm:col-span-2">
                         <label class="block text-sm mb-1.5">Alamat *</label>
                         <input type="text" name="items[{{ $k }}][alamat]" value="{{ old("items.$k.alamat", $a->alamat) }}" class="{{ $inputClass }}">

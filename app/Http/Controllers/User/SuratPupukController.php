@@ -72,7 +72,7 @@ class SuratPupukController extends Controller
             'items.*.tanggal_lahir' => 'required|date|before:today',
             'items.*.nama_ibu_kandung' => 'required|string|max:255',
             'items.*.alamat' => 'required|string|max:500',
-            'items.*.subsektor' => 'required|string|max:255',
+            'items.*.subsektor' => ['required', 'in:Tanaman Pangan,Hortikultura,Perkebunan,Peternakan,Petambak'],
             'items.*.musim' => 'required|array|size:3',
             'items.*.musim.*.komoditas' => 'nullable|string|max:100',
             'items.*.musim.*.luas' => 'nullable|numeric|min:0',

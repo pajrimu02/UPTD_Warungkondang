@@ -1,5 +1,5 @@
 <?php
-// app/Models/SuratPupuk.php
+ 
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -11,9 +11,15 @@ class SuratPupuk extends Model
     protected $fillable = [
         'user_id', 'poktan_id', 'nama_penyuluh', 'kode_desa', 'kode_kios', 'nama_kios', 'gapoktan',
         'status', 'catatan_admin', 'nomor_surat', 'file_surat_resmi', 'disetujui_oleh', 'disetujui_at',
+        'ttd_dikirim_at', 'ttd_kembali_at', 'diserahkan_at',
     ];
 
-    protected $casts = ['disetujui_at' => 'datetime'];
+    protected $casts = [
+    'disetujui_at' => 'datetime',
+    'ttd_dikirim_at' => 'datetime',
+    'ttd_kembali_at' => 'datetime',
+    'diserahkan_at' => 'datetime',
+    ];
 
     public function user(): BelongsTo { return $this->belongsTo(User::class); }
     public function poktan(): BelongsTo { return $this->belongsTo(Poktan::class); }

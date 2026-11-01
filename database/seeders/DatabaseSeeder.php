@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             UserRoleSeeder::class,
             PoktanSeeder::class, 
+            DesaSeeder::class,
         ]);
     }
 }
