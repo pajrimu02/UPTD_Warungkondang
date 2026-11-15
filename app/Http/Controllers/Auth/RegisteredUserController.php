@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Models\Poktan;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
@@ -27,14 +26,7 @@ class RegisteredUserController extends Controller
 
     public function create(): View
     {
-        // Hanya poktan yang sudah disetujui admin yang boleh dipilih saat daftar
-        $disetujui = Poktan::where('status', 'disetujui')->orderBy('nama_kelompok')->get();
-
-        return view('auth.register', [
-            'poktans'           => $disetujui,
-            'poktans_disetujui' => $disetujui, // alias, jaga-jaga kalau view memakai nama ini
-            'konsumen'          => self::KONSUMEN,
-        ]);
+        return view('auth.register', ['konsumen' => self::KONSUMEN]);
     }
 
     /**
@@ -50,8 +42,6 @@ class RegisteredUserController extends Controller
             'konsumen_pengguna' => ['required', Rule::in(array_keys(self::KONSUMEN))],
             'jenis_usaha'       => ['required', 'string', 'max:255'],
             'nama_kapal'        => ['nullable', 'required_if:konsumen_pengguna,usaha_perikanan', 'string', 'max:255'],
-            // Opsional: yang belum punya poktan bisa mengajukan poktan baru setelah login
-            'poktan_id'         => ['nullable', Rule::exists('poktans', 'id')->where('status', 'disetujui')],
             'email'             => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'password'          => ['required', 'confirmed', Rules\Password::defaults()],
         ], [
@@ -61,6 +51,7 @@ class RegisteredUserController extends Controller
             'nama_kapal.required_if' => 'Nama kapal wajib diisi untuk usaha perikanan.',
         ]);
 
+        // Keanggotaan poktan tidak diatur di sini: lewat kode undangan atau ditetapkan admin
         $user = User::create([
             'name'              => $data['name'],
             'nik'               => $data['nik'],
@@ -69,7 +60,6 @@ class RegisteredUserController extends Controller
             'konsumen_pengguna' => $data['konsumen_pengguna'],
             'jenis_usaha'       => $data['jenis_usaha'],
             'nama_kapal'        => $data['nama_kapal'] ?? null,
-            'poktan_id'         => $data['poktan_id'] ?? null,
             'email'             => $data['email'],
             'password'          => Hash::make($data['password']),
             'role'              => 'user',

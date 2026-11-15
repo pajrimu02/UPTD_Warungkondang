@@ -1,33 +1,30 @@
 @extends('layouts.user')
 
-@section('title', 'Anggota Poktan')
+@section('title', 'Kelola Anggota Poktan')
 
 @section('content')
 
     @php
-        $inputClass = 'w-full rounded-lg border border-[#E1DCC9] px-3.5 py-2.5 text-sm focus:outline-none focus:border-[#2D6A4F] focus:ring-2 focus:ring-[#2D6A4F]/20';
         $fmt = fn ($n) => number_format($n, 2, ',', '.');
-
-        $total = (float) $poktan->anggota->sum('luas_lahan_ha');
-        $batasPoktan = (float) $batasLuas;
-        $sisaPoktan = max(0, $batasPoktan - $total);
-        $persen = $batasPoktan > 0 ? min(100, round($total / $batasPoktan * 100)) : 0;
-
+        $aktif = $poktan->anggota->where('status', '!=', 'nonaktif');
+        $jumlah = $aktif->count();
+        $penuh = $jumlah >= $maksAnggota;
+        $total = (float) $aktif->sum('luas_lahan_ha');
+        $kurang = max(0, $minLuas - $total);
+        $persen = $minLuas > 0 ? min(100, round($total / $minLuas * 100)) : 0;
+        $memenuhi = $total >= $minLuas;
         $desa = $poktan->desa;
-        $batasDesa = $desa?->batasHa();
-        $sisaDesa = $batasDesa !== null ? $desa->sisaHa() : null;
-
-        $lebihPoktan = $total > $batasPoktan;
+        $sisaDesa = ($desa && $desa->batasHa() !== null) ? $desa->sisaHa() : null;
         $lebihDesa = $sisaDesa !== null && $total > $sisaDesa;
-
-        $adaKetua = $poktan->anggota->contains('jabatan', 'ketua');
+        $kode = $poktan->kode_undangan;
+        $tautan = route('poktan.undangan', $kode);
+        $pesanWa = urlencode("Ayo bergabung ke poktan {$poktan->nama_kelompok} di website UPTD Warungkondang. Buka tautan ini lalu masuk atau daftar akun petani: {$tautan} (kode undangan: {$kode})");
         $warnaJabatan = [
             'ketua' => 'bg-[#F6EDC9] text-[#7A5C12]',
             'sekretaris' => 'bg-sky-50 text-sky-700',
             'bendahara' => 'bg-sky-50 text-sky-700',
             'anggota' => 'bg-slate-100 text-slate-600',
         ];
-        $berkas = ['file_ktp' => 'KTP', 'file_kk' => 'Kartu Keluarga (KK)', 'file_sppt' => 'SPPT Sawah'];
     @endphp
 
     <a href="{{ route('user.poktan') }}" class="flex items-center gap-1.5 text-sm text-[#5C6B62] mb-4">
@@ -39,21 +36,59 @@
 
     @include('user.poktan._stepper', ['aktif' => 2])
 
+    @if ($poktan->catatan_admin)
+        <div class="text-sm bg-red-50 border border-red-200 text-red-800 rounded-2xl px-5 py-4 mb-6">
+            <p class="font-semibold">Catatan admin dari penolakan sebelumnya</p>
+            <p class="mt-1">{{ $poktan->catatan_admin }}</p>
+        </div>
+    @endif
+
+    {{-- Kode undangan --}}
+    <div class="relative bg-[#1B4332] text-white rounded-3xl p-6 md:p-7 overflow-hidden mb-8">
+        <div class="absolute -top-12 -right-12 w-44 h-44 rounded-full bg-[#2D6A4F]/50"></div>
+        <div class="relative">
+            <p class="text-xs font-semibold tracking-widest text-[#E9C85A]">KODE UNDANGAN</p>
+            <div class="flex items-center gap-3 flex-wrap mt-2">
+                <p class="font-serif text-4xl tracking-[0.25em]">{{ $kode }}</p>
+                <button type="button" data-salin="{{ $kode }}" class="text-xs font-semibold bg-white/10 hover:bg-white/20 border border-white/20 rounded-full px-3.5 py-2 transition">
+                    <i class="bi bi-clipboard"></i> <span>Salin kode</span>
+                </button>
+                <button type="button" data-salin="{{ $tautan }}" class="text-xs font-semibold bg-white/10 hover:bg-white/20 border border-white/20 rounded-full px-3.5 py-2 transition">
+                    <i class="bi bi-link-45deg"></i> <span>Salin tautan</span>
+                </button>
+                <a href="https://wa.me/?text={{ $pesanWa }}" target="_blank" rel="noopener" class="text-xs font-semibold bg-[#C9A227] text-[#1B4332] rounded-full px-3.5 py-2">
+                    <i class="bi bi-whatsapp"></i> Bagikan
+                </a>
+            </div>
+            <p class="text-sm text-[#CFE3D6] mt-4 leading-relaxed max-w-xl">
+                Calon anggota harus punya akun sendiri, lalu membuka menu Poktan, memilih Gabung dengan Kode, dan memasukkan kode ini. Kode tidak berlaku lagi setelah poktan diajukan.
+            </p>
+            <form method="POST" action="{{ route('user.poktan.kode', $poktan) }}" class="mt-3"
+                  data-judul="Buat kode baru?"
+                  data-konfirmasi="Kode lama langsung tidak berlaku. Anggota yang sudah bergabung tidak terpengaruh."
+                  data-tombol="Ya, Buat Kode Baru" data-tipe="normal">
+                @csrf
+                <button type="submit" class="text-xs text-[#E9C85A] underline underline-offset-2">Kode bocor? Buat kode baru</button>
+            </form>
+        </div>
+    </div>
+
     {{-- Ringkasan --}}
     <div class="grid sm:grid-cols-3 gap-4 mb-8">
         <div class="bg-white border border-[#E1DCC9] rounded-2xl p-5">
             <p class="text-xs text-[#8C9086]">Anggota</p>
-            <p class="font-serif text-2xl text-[#1B4332] mt-1">{{ $poktan->anggota->count() }}</p>
+            <p class="font-serif text-2xl text-[#1B4332] mt-1">{{ $jumlah }} <span class="text-base text-[#8C9086]">/ {{ $maksAnggota }}</span></p>
+            <p class="text-[11px] mt-3 text-[#8C9086]">{{ $penuh ? 'Jumlah anggota sudah penuh' : 'Maksimal ' . $maksAnggota . ' anggota' }}</p>
         </div>
 
         <div class="bg-white border border-[#E1DCC9] rounded-2xl p-5">
             <p class="text-xs text-[#8C9086]">Total luas lahan</p>
-            <p class="font-serif text-2xl {{ $lebihPoktan ? 'text-red-600' : 'text-[#1B4332]' }} mt-1">{{ $fmt($total) }} ha</p>
+            <p class="font-serif text-2xl {{ $memenuhi ? 'text-[#2D6A4F]' : 'text-[#1B4332]' }} mt-1">{{ $fmt($total) }} ha</p>
             <div class="h-2 rounded-full bg-[#EAF2EC] mt-3 overflow-hidden">
-                <div class="h-full rounded-full {{ $lebihPoktan ? 'bg-red-500' : 'bg-[#2D6A4F]' }}" style="width: {{ $persen }}%"></div>
+                <div class="h-full rounded-full {{ $memenuhi ? 'bg-[#2D6A4F]' : 'bg-[#C9A227]' }}" style="width: {{ $persen }}%"></div>
             </div>
-            <p class="text-[11px] mt-1.5 {{ $lebihPoktan ? 'text-red-600' : 'text-[#8C9086]' }}">
-                {{ $lebihPoktan ? 'Melebihi batas' : 'Sisa ' . $fmt($sisaPoktan) . ' ha' }} · maksimal {{ $fmt($batasPoktan) }} ha per poktan
+            <p class="text-[11px] mt-1.5 {{ $memenuhi ? 'text-[#2D6A4F]' : 'text-[#8C9086]' }}">
+                {{ $memenuhi ? 'Syarat minimal ' . $fmt($minLuas) . ' ha terpenuhi' : 'Kurang ' . $fmt($kurang) . ' ha lagi (minimal ' . $fmt($minLuas) . ' ha)' }}
             </p>
         </div>
 
@@ -71,160 +106,87 @@
         </div>
     </div>
 
+    {{-- Data ketua sendiri --}}
+    @if ($saya && $saya->status !== 'lengkap')
+        <div class="flex items-center justify-between gap-4 flex-wrap bg-amber-50 border border-amber-200 rounded-2xl px-5 py-4 mb-6">
+            <p class="text-sm text-amber-900"><i class="bi bi-exclamation-circle"></i> Data Anda sebagai ketua belum lengkap.</p>
+            <a href="{{ route('user.poktan.isi', $poktan) }}" class="bg-[#C9A227] text-[#1B4332] text-sm font-semibold px-5 py-2 rounded-full">Lengkapi sekarang</a>
+        </div>
+    @endif
+
     {{-- Daftar anggota --}}
     <h2 class="font-semibold text-[#14231C] mb-3">Daftar Anggota</h2>
     <div class="space-y-3 mb-8">
-        @forelse ($poktan->anggota as $a)
+        @foreach ($poktan->anggota as $a)
+            @php $punyaSaya = (int) $a->user_id === (int) auth()->id(); @endphp
             <div class="bg-white border border-[#E1DCC9] rounded-2xl p-4 md:p-5">
-                <div class="flex items-start justify-between gap-3">
+                <div class="flex items-start justify-between gap-3 flex-wrap">
                     <div class="min-w-0">
                         <div class="flex items-center gap-2 flex-wrap">
-                            <p class="font-semibold text-[#14231C]">{{ $a->nama }}</p>
+                            <p class="font-semibold text-[#14231C]">{{ $a->nama }}{{ $punyaSaya ? ' (Anda)' : '' }}</p>
                             <span class="text-[11px] font-semibold uppercase tracking-wide rounded-full px-2.5 py-0.5 {{ $warnaJabatan[$a->jabatan] ?? $warnaJabatan['anggota'] }}">{{ $a->jabatan }}</span>
+                            @if ($a->status === 'lengkap')
+                                <span class="text-[11px] font-semibold rounded-full px-2.5 py-0.5 bg-emerald-50 text-emerald-700">lengkap</span>
+                            @else
+                                <span class="text-[11px] font-semibold rounded-full px-2.5 py-0.5 bg-amber-50 text-amber-700">menunggu data</span>
+                            @endif
                         </div>
-                        <p class="text-xs text-[#5C6B62] mt-1">NIK {{ $a->nik }} · {{ $a->no_hp }} · {{ $fmt($a->luas_lahan_ha) }} ha</p>
-                        @if ($a->tempat_lahir)
-                            <p class="text-xs text-[#5C6B62] mt-0.5">{{ $a->tempat_lahir }}, {{ $a->tanggal_lahir?->format('d-m-Y') }} · Ibu: {{ $a->nama_ibu_kandung }}</p>
-                        @endif
-                        <p class="text-xs text-[#8C9086] mt-0.5">{{ $a->alamat }}</p>
+                        <p class="text-xs text-[#5C6B62] mt-1">
+                            NIK {{ $punyaSaya ? $a->nik : substr((string) $a->nik, 0, 6) . '••••••••••' }}
+                            @if ($a->luas_lahan_ha) · {{ $fmt($a->luas_lahan_ha) }} ha @endif
+                        </p>
                     </div>
-                    <form method="POST" action="{{ route('user.poktan.anggota.destroy', [$poktan, $a]) }}" onsubmit="return confirm('Hapus anggota ini?')">
-                        @csrf @method('DELETE')
-                        <button type="submit" class="w-9 h-9 rounded-lg text-red-600 hover:bg-red-50 flex items-center justify-center" aria-label="Hapus anggota"><i class="bi bi-trash"></i></button>
-                    </form>
-                </div>
-                <div class="flex flex-wrap gap-2 mt-3">
-                    @foreach (['ktp' => 'KTP', 'kk' => 'KK', 'sppt' => 'SPPT'] as $jenis => $label)
-                        <a href="{{ route('user.poktan.berkas', [$poktan, $a, $jenis]) }}" target="_blank" class="inline-flex items-center gap-1.5 text-xs border border-[#E1DCC9] rounded-full px-3 py-1 text-[#1B4332] hover:border-[#2D6A4F]">
-                            <i class="bi bi-paperclip"></i> {{ $label }}
-                        </a>
-                    @endforeach
-                </div>
-            </div>
-        @empty
-            <div class="bg-white border border-dashed border-[#C9C2A3] rounded-2xl px-6 py-8 text-center text-sm text-[#5C6B62]">
-                Belum ada anggota. Mulai dengan menambahkan ketua poktan.
-            </div>
-        @endforelse
-    </div>
 
-    {{-- Form tambah anggota --}}
-    <div id="form-anggota">
+                    @if ($punyaSaya)
+                        <a href="{{ route('user.poktan.isi', $poktan) }}" class="text-xs font-semibold text-[#2D6A4F] border border-[#2D6A4F]/40 rounded-full px-3.5 py-1.5 hover:bg-[#EAF2EC]">Ubah data saya</a>
+                    @elseif ($a->jabatan !== 'ketua')
+                        <div class="flex items-center gap-2">
+                            <form method="POST" action="{{ route('user.poktan.jabatan', [$poktan, $a]) }}">
+                                @csrf @method('PATCH')
+                                <select name="jabatan" onchange="this.form.submit()" class="text-xs rounded-lg border border-[#E1DCC9] px-2 py-1.5 bg-white">
+                                    @foreach (['anggota' => 'Anggota', 'sekretaris' => 'Sekretaris', 'bendahara' => 'Bendahara'] as $v => $l)
+                                        <option value="{{ $v }}" @selected($a->jabatan === $v)>{{ $l }}</option>
+                                    @endforeach
+                                </select>
+                            </form>
+                            <form method="POST" action="{{ route('user.poktan.anggota.destroy', [$poktan, $a]) }}"
+                                  data-judul="Keluarkan anggota?"
+                                  data-konfirmasi="{{ $a->nama }} akan dikeluarkan beserta berkas yang sudah diunggahnya. Ia bisa bergabung lagi dengan kode."
+                                  data-tombol="Ya, Keluarkan" data-tipe="bahaya">
+                                @csrf @method('DELETE')
+                                <button type="submit" class="w-9 h-9 rounded-lg text-red-600 hover:bg-red-50 flex items-center justify-center" aria-label="Keluarkan anggota"><i class="bi bi-person-dash"></i></button>
+                            </form>
+                        </div>
+                    @endif
+                </div>
 
-        @if (session('anggota_status'))
-            <div class="mb-4 flex items-start gap-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3.5 text-sm">
-                <i class="bi bi-check-circle-fill mt-0.5"></i>
-                <span>{{ session('anggota_status') }}</span>
-            </div>
-        @endif
-
-        @if ($errors->any())
-            <div class="mb-4 rounded-2xl bg-red-50 border border-red-200 text-red-800 px-4 py-3.5 text-sm">
-                <p class="font-medium mb-1"><i class="bi bi-exclamation-triangle-fill"></i> Anggota belum tersimpan. Perbaiki yang berikut:</p>
-                <ul class="list-disc ml-5 space-y-0.5">
-                    @foreach ($errors->all() as $pesan)
-                        <li>{{ $pesan }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
-
-        <form method="POST" action="{{ route('user.poktan.anggota.store', $poktan) }}#form-anggota" enctype="multipart/form-data" class="bg-white border border-[#E1DCC9] rounded-2xl p-6 space-y-4">
-            @csrf
-            <div class="flex items-center justify-between gap-3 flex-wrap">
-                <h2 class="font-semibold text-[#1B4332]"><i class="bi bi-person-plus"></i> Tambah Anggota</h2>
-                @unless ($adaKetua)
-                    <button type="button" id="isi-saya"
-                            data-nama="{{ auth()->user()->name }}" data-nik="{{ auth()->user()->nik }}" data-hp="{{ auth()->user()->no_hp }}" data-alamat="{{ auth()->user()->alamat }}"
-                            class="text-xs font-semibold text-[#2D6A4F] border border-[#2D6A4F]/40 rounded-full px-3 py-1.5 hover:bg-[#EAF2EC]">
-                        Isi dengan data saya (sebagai ketua)
-                    </button>
-                @endunless
-            </div>
-
-            <div class="grid sm:grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm mb-1.5">Nama Lengkap *</label>
-                    <input id="f-nama" type="text" name="nama" value="{{ old('nama') }}" class="{{ $inputClass }}">
-                    @error('nama') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-                </div>
-                <div>
-                    <label class="block text-sm mb-1.5">NIK *</label>
-                    <input id="f-nik" type="text" name="nik" maxlength="16" inputmode="numeric" value="{{ old('nik') }}" class="{{ $inputClass }}">
-                    @error('nik') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-                </div>
-                <div>
-                    <label class="block text-sm mb-1.5">Tempat Lahir *</label>
-                    <input type="text" name="tempat_lahir" value="{{ old('tempat_lahir') }}" class="{{ $inputClass }}">
-                    @error('tempat_lahir') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-                </div>
-                <div>
-                    <label class="block text-sm mb-1.5">Tanggal Lahir *</label>
-                    <input type="date" name="tanggal_lahir" value="{{ old('tanggal_lahir') }}" class="{{ $inputClass }}">
-                    @error('tanggal_lahir') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-                </div>
-                <div class="sm:col-span-2">
-                    <label class="block text-sm mb-1.5">Nama Ibu Kandung *</label>
-                    <input type="text" name="nama_ibu_kandung" value="{{ old('nama_ibu_kandung') }}" class="{{ $inputClass }}">
-                    @error('nama_ibu_kandung') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-                </div>
-                <div>
-                    <label class="block text-sm mb-1.5">No. HP/WA *</label>
-                    <input id="f-hp" type="text" name="no_hp" value="{{ old('no_hp') }}" class="{{ $inputClass }}">
-                    @error('no_hp') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-                </div>
-                <div>
-                    <label class="block text-sm mb-1.5">Jabatan *</label>
-                    <select id="f-jabatan" name="jabatan" class="{{ $inputClass }} bg-white">
-                        @foreach (['ketua' => 'Ketua', 'sekretaris' => 'Sekretaris', 'bendahara' => 'Bendahara', 'anggota' => 'Anggota'] as $v => $l)
-                            <option value="{{ $v }}" @disabled($v === 'ketua' && $adaKetua) @selected(old('jabatan', $adaKetua ? 'anggota' : 'ketua') === $v)>{{ $l }}</option>
+                @if ($punyaSaya && ($a->file_ktp || $a->file_kk || $a->file_sppt))
+                    <div class="flex flex-wrap gap-2 mt-3">
+                        @foreach (['ktp' => 'KTP', 'kk' => 'KK', 'sppt' => 'SPPT'] as $jenis => $label)
+                            @if ($a->{'file_' . $jenis})
+                                <a href="{{ route('user.poktan.berkas', [$poktan, $a, $jenis]) }}" target="_blank" class="inline-flex items-center gap-1.5 text-xs border border-[#E1DCC9] rounded-full px-3 py-1 text-[#1B4332] hover:border-[#2D6A4F]">
+                                    <i class="bi bi-paperclip"></i> {{ $label }}
+                                </a>
+                            @endif
                         @endforeach
-                    </select>
-                    @error('jabatan') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-                </div>
-                <div class="sm:col-span-2">
-                    <label class="block text-sm mb-1.5">Alamat *</label>
-                    <input id="f-alamat" type="text" name="alamat" value="{{ old('alamat') }}" class="{{ $inputClass }}">
-                    @error('alamat') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-                </div>
-                <div>
-                    <label class="block text-sm mb-1.5">Luas Lahan Sawah (ha) sesuai SPPT *</label>
-                    <input type="number" step="0.01" min="0.01" name="luas_lahan_ha" value="{{ old('luas_lahan_ha') }}" class="{{ $inputClass }}">
-                    @error('luas_lahan_ha') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-                </div>
-            </div>
-
-            <div class="space-y-3 pt-1">
-                @foreach ($berkas as $field => $label)
-                    <div>
-                        <label class="flex items-center gap-3 border border-dashed border-[#E1DCC9] rounded-xl px-4 py-3.5 cursor-pointer hover:border-[#2D6A4F] transition-colors">
-                            <i class="bi bi-cloud-arrow-up text-xl text-[#5C6B62]"></i>
-                            <span class="text-sm text-[#5C6B62] truncate">{{ $label }} *</span>
-                            <input type="file" name="{{ $field }}" required accept=".jpg,.jpeg,.png,.pdf" data-label="{{ $label }} *" class="sr-only">
-                        </label>
-                        @error($field) <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                     </div>
-                @endforeach
-                <p class="text-xs text-[#8C9086]">JPG, PNG, atau PDF, maksimal 2 MB per berkas.</p>
+                @endif
             </div>
-
-            <div class="flex justify-end">
-                <button type="submit" class="inline-flex items-center gap-2 bg-[#2D6A4F] hover:bg-[#1B4332] text-white text-sm px-6 py-2.5 rounded-full transition">
-                    <i class="bi bi-plus-lg"></i> Simpan Anggota
-                </button>
-            </div>
-        </form>
+        @endforeach
     </div>
 
     {{-- Selesai --}}
-    <div class="mt-8 bg-white border border-[#E1DCC9] rounded-2xl p-6">
+    <div class="bg-white border border-[#E1DCC9] rounded-2xl p-6">
         @if ($siap)
             <div class="flex items-center justify-between gap-4 flex-wrap">
                 <div>
                     <p class="font-semibold text-[#1B4332]"><i class="bi bi-check-circle-fill text-[#2D6A4F]"></i> Semua persyaratan terpenuhi</p>
-                    <p class="text-sm text-[#5C6B62] mt-1">Setelah diajukan, data anggota tidak dapat diubah sampai admin memverifikasi.</p>
+                    <p class="text-sm text-[#5C6B62] mt-1">Setelah diajukan, data anggota tidak dapat diubah dan kode undangan tidak berlaku lagi.</p>
                 </div>
-                <form method="POST" action="{{ route('user.poktan.selesai', $poktan) }}" onsubmit="return confirm('Ajukan poktan ini ke admin UPTD?')">
+                <form method="POST" action="{{ route('user.poktan.selesai', $poktan) }}"
+                      data-judul="Ajukan poktan ini?"
+                      data-konfirmasi="Setelah diajukan, data anggota tidak dapat diubah sampai admin UPTD selesai memverifikasi."
+                      data-tombol="Ya, Ajukan" data-tipe="normal">
                     @csrf
                     <button type="submit" class="inline-flex items-center gap-2 bg-[#1B4332] text-white text-sm font-semibold px-6 py-3 rounded-full">
                         Selesai & Ajukan <i class="bi bi-send"></i>
@@ -243,32 +205,21 @@
     </div>
 
     <script>
-        (function () {
-            document.querySelectorAll('input[type=file][data-label]').forEach(function (inp) {
-                inp.addEventListener('change', function () {
-                    var span = inp.previousElementSibling;
-                    var f = inp.files[0];
-                    if (f && f.size > 2 * 1024 * 1024) {
-                        alert('Ukuran file maksimal 2 MB.');
-                        inp.value = '';
-                        span.textContent = inp.dataset.label;
-                        return;
-                    }
-                    span.textContent = f ? f.name : inp.dataset.label;
-                });
+        document.querySelectorAll('[data-salin]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var teks = btn.dataset.salin;
+                var label = btn.querySelector('span');
+                var awal = label.textContent;
+                var selesai = function () { label.textContent = 'Tersalin!'; setTimeout(function () { label.textContent = awal; }, 1500); };
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(teks).then(selesai);
+                } else {
+                    var t = document.createElement('textarea');
+                    t.value = teks; document.body.appendChild(t); t.select();
+                    document.execCommand('copy'); document.body.removeChild(t); selesai();
+                }
             });
-
-            var tombol = document.getElementById('isi-saya');
-            if (tombol) {
-                tombol.addEventListener('click', function () {
-                    document.getElementById('f-nama').value = tombol.dataset.nama || '';
-                    document.getElementById('f-nik').value = tombol.dataset.nik || '';
-                    document.getElementById('f-hp').value = tombol.dataset.hp || '';
-                    document.getElementById('f-alamat').value = tombol.dataset.alamat || '';
-                    document.getElementById('f-jabatan').value = 'ketua';
-                });
-            }
-        })();
+        });
     </script>
 
 @endsection

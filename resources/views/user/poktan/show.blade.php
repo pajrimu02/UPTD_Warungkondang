@@ -12,6 +12,7 @@
         ];
         [$labelStatus, $kelasStatus] = $badge[$poktan->status] ?? ['-', 'bg-slate-100 text-slate-700'];
         $fmt = fn ($n) => number_format($n, 2, ',', '.');
+        $aktif = $poktan->anggota->where('status', '!=', 'nonaktif')->values();
         $warnaJabatan = [
             'ketua' => 'bg-[#F6EDC9] text-[#7A5C12]',
             'sekretaris' => 'bg-sky-50 text-sky-700',
@@ -51,8 +52,8 @@
     <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         @foreach ([
             ['bi-person-badge', 'Ketua', $poktan->nama_ketua ?? '-'],
-            ['bi-people', 'Jumlah Anggota', $poktan->anggota->count() . ' orang'],
-            ['bi-map', 'Total Luas Lahan', $fmt($poktan->luas_lahan_ha ?? 0) . ' ha'],
+            ['bi-people', 'Jumlah Anggota', $aktif->count() . ' orang'],
+            ['bi-map', 'Total Luas Lahan', $fmt($aktif->sum('luas_lahan_ha')) . ' ha'],
             ['bi-geo-alt', 'Alamat / Sekretariat', $poktan->alamat ?? '-'],
         ] as [$icon, $label, $nilai])
             <div class="bg-white border border-[#E1DCC9] rounded-2xl p-5">
@@ -65,29 +66,34 @@
 
     <h2 class="font-semibold text-[#14231C] mb-3">Daftar Anggota</h2>
     <div class="grid md:grid-cols-2 gap-4">
-        @foreach ($poktan->anggota as $i => $a)
+        @foreach ($aktif as $i => $a)
+            @php $punyaSaya = (int) $a->user_id === (int) auth()->id(); @endphp
             <div class="bg-white border border-[#E1DCC9] rounded-2xl p-5">
                 <div class="flex items-start gap-3">
                     <span class="w-10 h-10 shrink-0 rounded-full bg-[#1B4332] text-white flex items-center justify-center text-sm font-semibold">{{ $i + 1 }}</span>
                     <div class="min-w-0 flex-1">
                         <div class="flex items-center gap-2 flex-wrap">
-                            <p class="font-semibold text-[#14231C]">{{ $a->nama }}</p>
+                            <p class="font-semibold text-[#14231C]">{{ $a->nama }}{{ $punyaSaya ? ' (Anda)' : '' }}</p>
                             <span class="text-[11px] font-semibold uppercase tracking-wide rounded-full px-2.5 py-0.5 {{ $warnaJabatan[$a->jabatan] ?? $warnaJabatan['anggota'] }}">{{ $a->jabatan }}</span>
                         </div>
                         <dl class="mt-3 space-y-1.5 text-sm">
-                            <div class="flex gap-2"><dt class="text-[#8C9086] w-20 shrink-0">NIK</dt><dd>{{ $pemilik ? $a->nik : substr($a->nik, 0, 6) . '••••••••••' }}</dd></div>
-                            @if ($pemilik)
+                            <div class="flex gap-2"><dt class="text-[#8C9086] w-20 shrink-0">NIK</dt><dd>{{ $punyaSaya ? $a->nik : substr((string) $a->nik, 0, 6) . '••••••••••' }}</dd></div>
+                            @if ($punyaSaya)
                                 <div class="flex gap-2"><dt class="text-[#8C9086] w-20 shrink-0">No. HP</dt><dd>{{ $a->no_hp }}</dd></div>
+                                <div class="flex gap-2"><dt class="text-[#8C9086] w-20 shrink-0">Alamat</dt><dd>{{ $a->alamat }}</dd></div>
                             @endif
-                            <div class="flex gap-2"><dt class="text-[#8C9086] w-20 shrink-0">Alamat</dt><dd>{{ $a->alamat }}</dd></div>
-                            <div class="flex gap-2"><dt class="text-[#8C9086] w-20 shrink-0">Luas lahan</dt><dd>{{ $fmt($a->luas_lahan_ha) }} ha</dd></div>
+                            @if ($punyaSaya || $isKetua)
+                                <div class="flex gap-2"><dt class="text-[#8C9086] w-20 shrink-0">Luas lahan</dt><dd>{{ $fmt($a->luas_lahan_ha) }} ha</dd></div>
+                            @endif
                         </dl>
-                        @if ($pemilik)
+                        @if ($punyaSaya)
                             <div class="flex flex-wrap gap-2 mt-3">
                                 @foreach (['ktp' => 'KTP', 'kk' => 'KK', 'sppt' => 'SPPT'] as $jenis => $label)
-                                    <a href="{{ route('user.poktan.berkas', [$poktan, $a, $jenis]) }}" target="_blank" class="inline-flex items-center gap-1.5 text-xs border border-[#E1DCC9] rounded-full px-3 py-1 text-[#1B4332] hover:border-[#2D6A4F]">
-                                        <i class="bi bi-paperclip"></i> {{ $label }}
-                                    </a>
+                                    @if ($a->{'file_' . $jenis})
+                                        <a href="{{ route('user.poktan.berkas', [$poktan, $a, $jenis]) }}" target="_blank" class="inline-flex items-center gap-1.5 text-xs border border-[#E1DCC9] rounded-full px-3 py-1 text-[#1B4332] hover:border-[#2D6A4F]">
+                                            <i class="bi bi-paperclip"></i> {{ $label }}
+                                        </a>
+                                    @endif
                                 @endforeach
                             </div>
                         @endif

@@ -163,7 +163,32 @@
                 <span>{{ session('error') }}</span>
             </div>
         @endif
+        @php
+            $kodeUndangan = session('kode_undangan');
+            $undangan = ($kodeUndangan && $user->role === 'user' && ! request()->routeIs('user.poktan.gabung*'))
+                ? \App\Models\Poktan::with('desa')->where('kode_undangan', $kodeUndangan)->where('status', 'draft')->first()
+                : null;
+        @endphp
 
+        @if ($undangan)
+            <div class="mb-6 flex items-center justify-between gap-4 flex-wrap rounded-2xl bg-[#F6EDC9] border border-[#E9C85A]/60 px-5 py-4">
+                <div class="flex items-start gap-3">
+                    <i class="bi bi-envelope-open text-xl text-[#7A5C12] mt-0.5"></i>
+                    <div>
+                        <p class="text-sm font-semibold text-[#5C4410]">Anda diundang bergabung ke {{ $undangan->nama_kelompok }}</p>
+                        <p class="text-xs text-[#7A5C12] mt-0.5">Desa {{ $undangan->desa->nama ?? '-' }}. Lanjutkan untuk konfirmasi dan mengisi data diri.</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <a href="{{ route('user.poktan.gabung', ['kode' => $kodeUndangan]) }}" class="bg-[#1B4332] text-white text-sm font-semibold px-5 py-2 rounded-full">Lanjutkan</a>
+                    <form method="POST" action="{{ route('user.poktan.gabung.batal') }}">
+                        @csrf
+                        <button type="submit" class="text-sm text-[#7A5C12] px-3 py-2">Abaikan</button>
+                    </form>
+                </div>
+            </div>
+        @endif
+        
         @yield('content')
     </main>
 

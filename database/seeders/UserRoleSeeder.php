@@ -29,6 +29,24 @@ class UserRoleSeeder extends Seeder
         );
 
         User::updateOrCreate(
+            ['email' => 'user1@test.com'],
+            [
+                'name' => 'User Test',
+                'password' => Hash::make('password'),
+                'role' => 'user',
+            ]
+        );
+
+        User::updateOrCreate(
+            ['email' => 'user2@test.com'],
+            [
+                'name' => 'User Test',
+                'password' => Hash::make('password'),
+                'role' => 'user',
+            ]
+        );
+
+        User::updateOrCreate(
             ['email' => 'ketua@test.com'],
             [
                 'name' => 'Ketua Test',

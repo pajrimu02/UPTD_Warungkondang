@@ -31,7 +31,7 @@
                 <option value="">-- Pilih desa --</option>
                 @foreach ($desas as $d)
                     <option value="{{ $d->id }}" @selected(old('desa_id') == $d->id)>
-                        {{ $d->nama }} (sisa LBS {{ number_format($d->sisaHa(), 2, ',', '.') }} ha)
+                        {{ $d->nama }}@if ($d->batasHa() !== null) (sisa {{ number_format($d->sisaHa(), 2, ',', '.') }} ha{{ $d->memakaiBatasBawaan() ? ', batas sementara' : '' }})@endif
                     </option>
                 @endforeach
             </select>
@@ -51,7 +51,7 @@
 
         <div class="text-sm bg-[#EAF2EC] rounded-xl px-4 py-3 text-[#3F5148] leading-relaxed">
             <i class="bi bi-info-circle text-[#2D6A4F]"></i>
-            Langkah berikutnya: tambahkan anggota. Siapkan KTP, KK, dan SPPT sawah tiap anggota (JPG/PNG/PDF, maks 2 MB).
+            Setelah ini Anda mendapat <b>kode undangan</b> untuk dibagikan ke anggota. Setiap anggota mengisi data dan mengunggah berkasnya sendiri. Anda hanya perlu melengkapi data Anda sebagai ketua.
         </div>
 
         <div class="flex justify-end gap-3 pt-1">

@@ -9,6 +9,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
+use App\Models\User;
+use Illuminate\Support\Facades\DB;
 
 class PoktanController extends Controller
 {
@@ -57,25 +59,51 @@ class PoktanController extends Controller
 
         if ($data['keputusan'] === 'disetujui') {
             $poktan->load('desa', 'anggota');
-            $total = (float) $poktan->anggota->sum('luas_lahan_ha');
-            $batasPoktan = (float) config('uptd.maks_luas_poktan_ha', 25);
+            $aktif = $poktan->anggota->where('status', '!=', 'nonaktif');
+            $total = (float) $aktif->sum('luas_lahan_ha');
+            $min = (float) config('uptd.min_luas_poktan_ha', 30);
+            $maks = (int) config('uptd.maks_anggota_poktan', 35);
+            $fmt = fn ($n) => number_format($n, 2, ',', '.');
 
             if (! $poktan->desa) {
                 return back()->with('error', 'Desa poktan belum dipilih.');
             }
-            if ($total > $batasPoktan) {
-                return back()->with('error', 'Total luas lahan melebihi batas ' . $batasPoktan . ' ha per poktan.');
+            if ($total < $min) {
+                return back()->with('error', 'Total luas lahan ' . $fmt($total) . ' ha kurang dari minimal ' . $fmt($min) . ' ha.');
+            }
+            if ($aktif->count() > $maks) {
+                return back()->with('error', 'Jumlah anggota melebihi batas ' . $maks . ' orang.');
+            }
+            if ($aktif->where('status', '!=', 'lengkap')->isNotEmpty()) {
+                return back()->with('error', 'Ada anggota yang datanya belum lengkap.');
             }
             if ($poktan->desa->batasHa() !== null && $total > $poktan->desa->sisaHa()) {
-                return back()->with('error', 'Total luas lahan melebihi sisa batas luas sawah desa.');
+                return back()->with('error', 'Total luas lahan melebihi sisa batas luas sawah desa ' . $poktan->desa->nama . '.');
+            }
+
+            $ganda = PoktanAnggota::whereIn('nik', $aktif->pluck('nik')->filter())
+                ->where('poktan_id', '!=', $poktan->id)
+                ->where('status', '!=', 'nonaktif')
+                ->whereHas('poktan', fn ($q) => $q->where('status', 'disetujui'))
+                ->exists();
+            if ($ganda) {
+                return back()->with('error', 'Ada NIK anggota yang sudah terdaftar di poktan lain yang disetujui.');
             }
         }
 
-        $poktan->update([
-            'status' => $data['keputusan'],
-            'catatan_admin' => $data['catatan_admin'] ?? null,
-            'disetujui_at' => $data['keputusan'] === 'disetujui' ? now() : null,
-        ]);
+        DB::transaction(function () use ($poktan, $data) {
+            $poktan->update([
+                'status' => $data['keputusan'],
+                'catatan_admin' => $data['catatan_admin'] ?? null,
+                'disetujui_at' => $data['keputusan'] === 'disetujui' ? now() : null,
+            ]);
+
+            // Saat disetujui, akun semua anggota otomatis terhubung ke poktan
+            if ($data['keputusan'] === 'disetujui') {
+                $ids = $poktan->anggota()->where('status', '!=', 'nonaktif')->pluck('user_id')->filter();
+                User::whereIn('id', $ids)->update(['poktan_id' => $poktan->id]);
+            }
+        });
 
         return redirect()->route('admin.poktan.show', $poktan)
             ->with('success', 'Poktan "' . $poktan->nama_kelompok . '" ' . $data['keputusan'] . '.');
