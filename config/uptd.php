@@ -15,9 +15,15 @@ return [
     'masa_berlaku_bulan' => 3,
 
     // Aturan poktan (dari pihak berwenang)
-    'min_luas_poktan_ha' => 30,      
+    'min_luas_poktan_ha' => 10,      
     'maks_anggota_poktan' => 35,     
     'default_lbs_desa_ha' => 250,      
 
-     
+    'kecamatan' => 'Warungkondang',
+    'kabupaten' => 'Cianjur',
+
+    // Penandatangan SK Pengukuhan Poktan  
+    'sk_jabatan_penandatangan' => 'Kepala UPTD Pelayanan Pertanian',
+    'sk_nama_penandatangan' => 'Yani Hendriani, S.P.',
+    'sk_nip_penandatangan' => 'NIP. 197508142009012001',
 ];

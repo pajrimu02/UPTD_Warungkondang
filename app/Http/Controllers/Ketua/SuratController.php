@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Ketua;
 
 use App\Http\Controllers\Controller;
+use App\Models\Poktan;
 use App\Models\SuratPupuk;
 use App\Models\SuratSolar;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -21,18 +22,26 @@ class SuratController extends Controller
         'file_surat_resmi.max' => 'Ukuran file maksimal 4 MB.',
     ];
 
+    private function adalahKepala(): bool
+    {
+        return auth()->user()?->role === 'kepala';
+    }
+
     public function index(Request $request): View
     {
-        $jenis = in_array($request->input('jenis'), ['solar', 'pupuk'], true) ? $request->input('jenis') : null;
+        $isKepala = $this->adalahKepala();
+        $jenis = ! $isKepala && in_array($request->input('jenis'), ['solar', 'pupuk'], true)
+            ? $request->input('jenis')
+            : null;
 
         return view('ketua.surat.index', [
             'menunggu' => $this->daftar(false, $jenis),
             'selesai' => $this->daftar(true, $jenis)->take(10),
             'jenis' => $jenis,
+            'isKepala' => $isKepala,
         ]);
     }
 
-    /** Gabungan solar dan pupuk. $selesai=false: menunggu tanda tangan, true: sudah kembali. */
     private function daftar(bool $selesai, ?string $jenis = null): Collection
     {
         $kolom = $selesai ? 'ttd_kembali_at' : 'ttd_dikirim_at';
@@ -41,8 +50,29 @@ class SuratController extends Controller
             ? $q->whereNotNull('ttd_kembali_at')
             : $q->whereNotNull('ttd_dikirim_at')->whereNull('ttd_kembali_at');
 
+        // KEPALA UPTD: Hanya SK Pengukuhan Poktan
+        if ($this->adalahKepala()) {
+            return $filter(Poktan::with('desa')->withCount('anggota'))->get()->map(fn ($p) => [
+                'jenis' => 'SK Poktan',
+                'kunci' => 'poktan',
+                'id' => $p->id,
+                'ikon' => 'bi-diagram-3',
+                'judul' => $p->nama_kelompok,
+                'nomor' => $p->nomor_sk,
+                'info' => 'Desa ' . ($p->desa?->nama ?? '-') . ' · ' . $p->anggota_count . ' anggota',
+                'waktu' => $p->$kolom,
+                'terkirim' => $p->diserahkan_at,
+                'cetak' => route('ketua.surat.cetak-poktan', $p),
+                'upload' => route('ketua.surat.upload-poktan', $p),
+            ])->sortBy($selesai ? fn ($x) => -$x['waktu']->timestamp : fn ($x) => $x['waktu']->timestamp)->values();
+        }
+
+        // KETUA (SUB BAG TU): Hanya Solar & Pupuk
         $solar = $jenis === 'pupuk' ? collect() : $filter(SuratSolar::with('user', 'poktan'))->get()->map(fn ($s) => [
-            'jenis' => 'Solar', 'kunci' => 'solar', 'id' => $s->id, 'ikon' => 'bi-fuel-pump',
+            'jenis' => 'Solar',
+            'kunci' => 'solar',
+            'id' => $s->id,
+            'ikon' => 'bi-fuel-pump',
             'judul' => $s->nama_pemohon ?? $s->user->name,
             'nomor' => $s->nomor_surat,
             'info' => number_format((float) $s->alokasi_volume, 0, ',', '.') . ' L/minggu · ' . ($s->poktan?->nama_kelompok ?? 'Mandiri'),
@@ -53,7 +83,10 @@ class SuratController extends Controller
         ]);
 
         $pupuk = $jenis === 'solar' ? collect() : $filter(SuratPupuk::with('poktan')->withCount('items'))->get()->map(fn ($s) => [
-            'jenis' => 'Pupuk', 'kunci' => 'pupuk', 'id' => $s->id, 'ikon' => 'bi-flower2',
+            'jenis' => 'Pupuk',
+            'kunci' => 'pupuk',
+            'id' => $s->id,
+            'ikon' => 'bi-flower2',
             'judul' => $s->poktan->nama_kelompok,
             'nomor' => $s->nomor_surat,
             'info' => $s->items_count . ' petani',
@@ -70,56 +103,59 @@ class SuratController extends Controller
 
     private function cari(string $jenis, int $id)
     {
+        if ($jenis === 'poktan') {
+            abort_unless($this->adalahKepala(), 403);
+            return Poktan::findOrFail($id);
+        }
+
+        abort_if($this->adalahKepala(), 403);
         $model = $jenis === 'solar' ? SuratSolar::class : SuratPupuk::class;
 
         return $model::findOrFail($id);
     }
 
-    /** Lihat scan yang sudah diunggah */
     public function scan(string $jenis, int $id)
     {
-        $surat = $this->cari($jenis, $id);
+        $item = $this->cari($jenis, $id);
+        $path = $jenis === 'poktan' ? $item->file_sk_resmi : $item->file_surat_resmi;
 
-        abort_unless($surat->file_surat_resmi && Storage::disk('public')->exists($surat->file_surat_resmi), 404, 'File tidak ditemukan.');
+        abort_unless($path && Storage::disk('public')->exists($path), 404, 'File tidak ditemukan.');
 
-        return Storage::disk('public')->response($surat->file_surat_resmi);
+        return Storage::disk('public')->response($path);
     }
 
-    /** Hapus scan, surat kembali ke daftar menunggu. Hanya jika admin belum mengirim ke petani. */
     public function hapusScan(string $jenis, int $id): RedirectResponse
     {
-        $surat = $this->cari($jenis, $id);
+        $item = $this->cari($jenis, $id);
+        abort_unless($item->ttd_kembali_at && ! $item->diserahkan_at, 403);
 
-        abort_unless($surat->ttd_kembali_at && ! $surat->diserahkan_at, 403);
+        $kolomFile = $jenis === 'poktan' ? 'file_sk_resmi' : 'file_surat_resmi';
+        $nomor = $jenis === 'poktan' ? $item->nomor_sk : $item->nomor_surat;
 
-        if ($surat->file_surat_resmi) {
-            Storage::disk('public')->delete($surat->file_surat_resmi);
+        if ($item->$kolomFile) {
+            Storage::disk('public')->delete($item->$kolomFile);
         }
 
-        $surat->update(['file_surat_resmi' => null, 'ttd_kembali_at' => null]);
+        $item->update([$kolomFile => null, 'ttd_kembali_at' => null]);
 
-        return back()->with('success', 'Scan surat ' . $surat->nomor_surat . ' dihapus. Surat kembali ke daftar menunggu, silakan unggah ulang.');
+        return back()->with('success', 'Scan ' . $nomor . ' dihapus. Dokumen kembali ke daftar menunggu.');
     }
 
-    // ---- Solar ----
+    // ---- Solar & Pupuk (role:ketua) ----
 
     public function cetakSolar(SuratSolar $suratSolar)
     {
-        abort_unless($suratSolar->ttd_dikirim_at, 403);
+        abort_unless(! $this->adalahKepala() && $suratSolar->ttd_dikirim_at, 403);
         $suratSolar->load('user', 'poktan');
 
         return Pdf::loadView('pdf.surat-rekomendasi-solar', compact('suratSolar'))
-            ->setPaper(self::F4)
-            ->stream('Surat-Rekomendasi-' . $suratSolar->id . '.pdf');
+            ->setPaper(self::F4)->stream('Surat-Rekomendasi-' . $suratSolar->id . '.pdf');
     }
 
     public function uploadSolar(Request $request, SuratSolar $suratSolar): RedirectResponse
     {
-        abort_unless($suratSolar->ttd_dikirim_at && ! $suratSolar->ttd_kembali_at, 403);
-
-        $request->validate([
-            'file_surat_resmi' => ['required', 'file', 'mimes:pdf', 'max:4096'],
-        ], self::PESAN_PDF);
+        abort_unless(! $this->adalahKepala() && $suratSolar->ttd_dikirim_at && ! $suratSolar->ttd_kembali_at, 403);
+        $request->validate(['file_surat_resmi' => ['required', 'file', 'mimes:pdf', 'max:4096']], self::PESAN_PDF);
 
         $suratSolar->update([
             'file_surat_resmi' => $request->file('file_surat_resmi')->store('surat-resmi', 'public'),
@@ -129,25 +165,19 @@ class SuratController extends Controller
         return back()->with('success', 'Scan surat ' . $suratSolar->nomor_surat . ' terkirim ke admin.');
     }
 
-    // ---- Pupuk ----
-
     public function cetakPupuk(SuratPupuk $suratPupuk)
     {
-        abort_unless($suratPupuk->ttd_dikirim_at, 403);
+        abort_unless(! $this->adalahKepala() && $suratPupuk->ttd_dikirim_at, 403);
         $suratPupuk->load('poktan.desa', 'items');
 
         return Pdf::loadView('pdf.surat-rekomendasi-pupuk', compact('suratPupuk'))
-            ->setPaper(self::F4)
-            ->stream('Surat-Rekomendasi-Pupuk-' . $suratPupuk->id . '.pdf');
+            ->setPaper(self::F4)->stream('Surat-Rekomendasi-Pupuk-' . $suratPupuk->id . '.pdf');
     }
 
     public function uploadPupuk(Request $request, SuratPupuk $suratPupuk): RedirectResponse
     {
-        abort_unless($suratPupuk->ttd_dikirim_at && ! $suratPupuk->ttd_kembali_at, 403);
-
-        $request->validate([
-            'file_surat_resmi' => ['required', 'file', 'mimes:pdf', 'max:4096'],
-        ], self::PESAN_PDF);
+        abort_unless(! $this->adalahKepala() && $suratPupuk->ttd_dikirim_at && ! $suratPupuk->ttd_kembali_at, 403);
+        $request->validate(['file_surat_resmi' => ['required', 'file', 'mimes:pdf', 'max:4096']], self::PESAN_PDF);
 
         $suratPupuk->update([
             'file_surat_resmi' => $request->file('file_surat_resmi')->store('surat-resmi-pupuk', 'public'),
@@ -155,6 +185,30 @@ class SuratController extends Controller
         ]);
 
         return back()->with('success', 'Scan surat ' . $suratPupuk->nomor_surat . ' terkirim ke admin.');
+    }
+
+    // ---- SK Poktan (role:kepala) ----
+
+    public function cetakPoktan(Poktan $poktan)
+    {
+        abort_unless($this->adalahKepala() && $poktan->ttd_dikirim_at, 403);
+        $poktan->load(['desa', 'anggota' => fn ($q) => $q->orderBy('nama')]);
+
+        return Pdf::loadView('pdf.sk-pengukuhan-poktan', ['poktan' => $poktan, 'draf' => false])
+            ->setPaper(self::F4)->stream('SK-Pengukuhan-' . $poktan->id . '.pdf');
+    }
+
+    public function uploadPoktan(Request $request, Poktan $poktan): RedirectResponse
+    {
+        abort_unless($this->adalahKepala() && $poktan->ttd_dikirim_at && ! $poktan->ttd_kembali_at, 403);
+        $request->validate(['file_surat_resmi' => ['required', 'file', 'mimes:pdf', 'max:4096']], self::PESAN_PDF);
+
+        $poktan->update([
+            'file_sk_resmi' => $request->file('file_surat_resmi')->store('sk-poktan', 'public'),
+            'ttd_kembali_at' => now(),
+        ]);
+
+        return back()->with('success', 'Scan SK ' . $poktan->nomor_sk . ' terkirim ke admin.');
     }
 
     // ---- Rekap ----

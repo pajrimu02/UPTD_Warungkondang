@@ -67,7 +67,7 @@ Route::get('/hubungi-kami', [HomeController::class, 'hubungiKami'])->name('hubun
     Route::get('/poktan', [PoktanController::class, 'index'])->name('poktan');
     Route::get('/poktan/ajukan', [PoktanController::class, 'create'])->name('poktan.create');
     Route::post('/poktan', [PoktanController::class, 'store'])->name('poktan.store');
-
+    Route::get('/poktan/{poktan}/sk-resmi', [PoktanController::class, 'skResmi'])->whereNumber('poktan')->name('poktan.sk-resmi');
     Route::get('/poktan/gabung', [PoktanController::class, 'gabung'])->name('poktan.gabung');
     Route::post('/poktan/gabung', [PoktanController::class, 'gabungCek'])->middleware('throttle:10,1')->name('poktan.gabung.cek');
     Route::post('/poktan/gabung/konfirmasi', [PoktanController::class, 'gabungKonfirmasi'])->middleware('throttle:10,1')->name('poktan.gabung.konfirmasi');
@@ -103,9 +103,9 @@ Route::get('/hubungi-kami', [HomeController::class, 'hubungiKami'])->name('hubun
 
 // ADMIN
 
-Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
-
+    Route::post('/poktan/{poktan}/tahap', [AdminPoktanController::class, 'tahap'])->name('poktan.tahap');
     Route::get('/surat-solar', [AdminSuratSolarController::class, 'index'])->name('surat-solar.index');
     Route::get('/surat-solar/{suratSolar}', [AdminSuratSolarController::class, 'show'])->name('surat-solar.show');
     Route::put('/surat-solar/{suratSolar}', [AdminSuratSolarController::class, 'update'])->name('surat-solar.update');
@@ -130,7 +130,10 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/poktan/{poktan}', [AdminPoktanController::class, 'show'])->name('poktan.show');
     Route::put('/poktan/{poktan}', [AdminPoktanController::class, 'update'])->name('poktan.update');
     Route::get('/poktan/{poktan}/anggota/{anggota}/berkas/{jenis}', [AdminPoktanController::class, 'berkas'])->name('poktan.berkas');
-
+    Route::post('/poktan/{poktan}/anggota', [AdminPoktanController::class, 'tambahAnggota'])->name('poktan.anggota.store');
+    Route::delete('/poktan/{poktan}/anggota/{anggota}', [AdminPoktanController::class, 'hapusAnggota'])->name('poktan.anggota.destroy');
+    Route::post('/petani/{user}/status', [AdminPetaniController::class, 'ubahStatus'])->name('petani.status');
+    Route::get('/poktan/{poktan}/sk-preview', [AdminPoktanController::class, 'skPreview'])->name('poktan.sk-preview');
     Route::resource('desa', AdminDesaController::class)->only(['index', 'store', 'update', 'destroy']);
 
     Route::get('/kritik-saran', [AdminKritikSaranController::class, 'index'])->name('kritiksaran.index');
@@ -142,13 +145,12 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 
     Route::get('/petani', [AdminPetaniController::class, 'index'])->name('petani.index');
     Route::get('/petani/{user}/edit', [AdminPetaniController::class, 'edit'])->name('petani.edit');
-    Route::put('/petani/{user}', [AdminPetaniController::class, 'update'])->name('petani.update');
-    Route::delete('/petani/{user}', [AdminPetaniController::class, 'destroy'])->name('petani.destroy');
+    Route::put('/petani/{user}', [AdminPetaniController::class, 'update'])->name('petani.update'); 
     Route::post('/petani/{user}/reset-password', [AdminPetaniController::class, 'resetPassword'])->name('petani.reset-password');
 });
 
 // KETUA
-    Route::middleware(['auth', 'role:ketua'])->prefix('ketua')->name('ketua.')->group(function () {
+    Route::middleware(['auth', 'role:ketua,kepala'])->prefix('ketua')->name('ketua.')->group(function () {
     Route::get('/', [KetuaDashboardController::class, 'index'])->name('dashboard');
     Route::get('/surat', [KetuaSuratController::class, 'index'])->name('surat.index');
     Route::get('/surat/solar/{suratSolar}/cetak', [KetuaSuratController::class, 'cetakSolar'])->name('surat.cetak-solar');
@@ -160,6 +162,29 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     ->whereIn('jenis', ['solar', 'pupuk'])->whereNumber('id')->name('surat.scan');
     Route::delete('/surat/{jenis}/{id}/scan', [KetuaSuratController::class, 'hapusScan'])
     ->whereIn('jenis', ['solar', 'pupuk'])->whereNumber('id')->name('surat.hapus-scan');
+});
+
+// KETUA (Sub Bag TU: Solar & Pupuk) & KEPALA UPTD (SK Poktan)
+Route::middleware(['auth', 'role:ketua,kepala'])->prefix('ketua')->name('ketua.')->group(function () {
+    Route::get('/', [KetuaDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/surat', [KetuaSuratController::class, 'index'])->name('surat.index');
+    Route::get('/rekap', [KetuaSuratController::class, 'rekap'])->name('rekap');
+
+    // Solar & Pupuk (hanya role:ketua)
+    Route::get('/surat/solar/{suratSolar}/cetak', [KetuaSuratController::class, 'cetakSolar'])->name('surat.cetak-solar');
+    Route::post('/surat/solar/{suratSolar}/upload', [KetuaSuratController::class, 'uploadSolar'])->name('surat.upload-solar');
+    Route::get('/surat/pupuk/{suratPupuk}/cetak', [KetuaSuratController::class, 'cetakPupuk'])->name('surat.cetak-pupuk');
+    Route::post('/surat/pupuk/{suratPupuk}/upload', [KetuaSuratController::class, 'uploadPupuk'])->name('surat.upload-pupuk');
+
+    // SK Poktan (hanya role:kepala)
+    Route::get('/surat/poktan/{poktan}/cetak', [KetuaSuratController::class, 'cetakPoktan'])->name('surat.cetak-poktan');
+    Route::post('/surat/poktan/{poktan}/upload', [KetuaSuratController::class, 'uploadPoktan'])->name('surat.upload-poktan');
+
+    // Lihat & Hapus Scan (mendukung solar, pupuk, dan poktan)
+    Route::get('/surat/{jenis}/{id}/scan', [KetuaSuratController::class, 'scan'])
+        ->whereIn('jenis', ['solar', 'pupuk', 'poktan'])->whereNumber('id')->name('surat.scan');
+    Route::delete('/surat/{jenis}/{id}/scan', [KetuaSuratController::class, 'hapusScan'])
+        ->whereIn('jenis', ['solar', 'pupuk', 'poktan'])->whereNumber('id')->name('surat.hapus-scan');
 });
 
 require __DIR__.'/auth.php';

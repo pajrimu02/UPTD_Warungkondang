@@ -12,11 +12,12 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias(['role' => \App\Http\Middleware\EnsureRole::class]);
+        $middleware->appendToGroup('web', \App\Http\Middleware\PastikanAkunAktif::class);
 
       
         $middleware->redirectUsersTo(fn () => match (auth()->user()?->role) {
             'admin' => route('admin.dashboard'),
-            'ketua' => route('ketua.dashboard'),
+            'ketua', 'kepala' => route('ketua.dashboard'),
             default => route('user.dashboard'),
         });
     })

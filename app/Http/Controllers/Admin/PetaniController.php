@@ -6,8 +6,8 @@ use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Controller;
 use App\Models\Poktan;
 use App\Models\User;
-use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -37,7 +37,7 @@ class PetaniController extends Controller
 
         return view('admin.petani.edit', [
             'petani'   => $user,
-            'poktans'  => Poktan::orderBy('nama_kelompok')->get(),
+            'poktans'  => Poktan::where('status', 'disetujui')->orderBy('nama_kelompok')->get(),
             'konsumen' => RegisteredUserController::KONSUMEN,
         ]);
     }
@@ -55,7 +55,7 @@ class PetaniController extends Controller
             'konsumen_pengguna' => ['nullable', Rule::in(array_keys(RegisteredUserController::KONSUMEN))],
             'jenis_usaha'       => ['nullable', 'string', 'max:255'],
             'nama_kapal'        => ['nullable', 'string', 'max:255'],
-            'poktan_id'         => ['nullable', 'exists:poktans,id'],
+            'poktan_id'         => ['nullable', Rule::exists('poktans', 'id')->where('status', 'disetujui')],
         ], [
             'nik.digits'  => 'NIK harus 16 digit angka.',
             'nik.unique'  => 'NIK sudah dipakai akun lain.',
@@ -64,9 +64,7 @@ class PetaniController extends Controller
 
         $user->update($validated);
 
-        return redirect()
-            ->route('admin.petani.index')
-            ->with('success', 'Data petani berhasil diperbarui.');
+        return redirect()->route('admin.petani.index')->with('success', 'Data petani berhasil diperbarui.');
     }
 
     public function resetPassword(User $user): RedirectResponse
@@ -76,19 +74,19 @@ class PetaniController extends Controller
         $newPassword = Str::random(8);
         $user->update(['password' => Hash::make($newPassword)]);
 
-        return redirect()
-            ->route('admin.petani.index')
+        return redirect()->route('admin.petani.index')
             ->with('success', "Password {$user->name} berhasil di-reset. Password baru: {$newPassword}");
     }
 
-    public function destroy(User $user): RedirectResponse
+    /** Menonaktifkan atau mengaktifkan kembali akun. Riwayat surat dan data poktan tetap tersimpan. */
+    public function ubahStatus(User $user): RedirectResponse
     {
         abort_unless($user->role === 'user', 404);
 
-        $user->delete();
+        $user->update(['aktif' => ! $user->aktif]);
 
-        return redirect()
-            ->route('admin.petani.index')
-            ->with('success', 'Akun petani berhasil dihapus.');
+        return back()->with('success', $user->aktif
+            ? "Akun {$user->name} diaktifkan kembali."
+            : "Akun {$user->name} dinonaktifkan. Riwayat pengajuannya tetap tersimpan.");
     }
 }

@@ -12,7 +12,8 @@
     <h1 class="text-2xl font-semibold text-[#1B4332] mb-6">Edit Profil</h1>
 
     @php
-        $input = 'w-full rounded-lg border-[#E1DCC9] focus:border-[#2D6A4F] focus:ring-[#2D6A4F]';
+        $input = 'block w-full rounded-lg border border-[#B9B39A] bg-white px-3.5 py-2.5 text-sm text-[#14231C] placeholder:text-[#A3A794] shadow-sm outline-none transition focus:border-[#2D6A4F] focus:ring-2 focus:ring-[#2D6A4F]/25';
+        $label = 'block text-sm font-medium text-[#26332B] mb-1.5';
     @endphp
 
     <form method="POST" action="{{ route('user.profil.update') }}"
@@ -21,42 +22,41 @@
         @csrf
         @method('PUT')
 
-        {{-- Data diri --}}
         <div>
-            <p class="flex items-center gap-2 text-sm font-medium text-[#1B4332] mb-4">
+            <p class="flex items-center gap-2 text-sm font-semibold text-[#1B4332] mb-4">
                 <i class="bi bi-person-vcard"></i>
                 <span>Data Diri</span>
             </p>
 
             <div class="space-y-4">
                 <div>
-                    <label class="block text-sm mb-1">Nama Lengkap</label>
-                    <input type="text" name="name" value="{{ old('name', $user->name) }}" class="{{ $input }}">
+                    <label class="{{ $label }}">Nama Lengkap</label>
+                    <input type="text" name="name" value="{{ old('name', $user->name) }}" placeholder="Nama sesuai KTP" class="{{ $input }}">
                     @error('name') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                 </div>
 
                 <div>
-                    <label class="block text-sm mb-1">Email</label>
-                    <input type="email" name="email" value="{{ old('email', $user->email) }}" class="{{ $input }}">
+                    <label class="{{ $label }}">Email</label>
+                    <input type="email" name="email" value="{{ old('email', $user->email) }}" placeholder="nama@email.com" class="{{ $input }}">
                     @error('email') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                 </div>
 
                 <div class="grid sm:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm mb-1">NIK</label>
-                        <input type="text" name="nik" maxlength="16" inputmode="numeric" value="{{ old('nik', $user->nik) }}" class="{{ $input }}">
+                        <label class="{{ $label }}">NIK</label>
+                        <input type="text" name="nik" maxlength="16" inputmode="numeric" value="{{ old('nik', $user->nik) }}" placeholder="16 digit angka" class="{{ $input }}">
                         @error('nik') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                     </div>
                     <div>
-                        <label class="block text-sm mb-1">No. HP</label>
-                        <input type="text" name="no_hp" value="{{ old('no_hp', $user->no_hp) }}" class="{{ $input }}">
+                        <label class="{{ $label }}">No. HP</label>
+                        <input type="text" name="no_hp" value="{{ old('no_hp', $user->no_hp) }}" placeholder="08**********" class="{{ $input }}">
                         @error('no_hp') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-sm mb-1">Alamat</label>
-                    <textarea name="alamat" rows="2" class="{{ $input }}">{{ old('alamat', $user->alamat) }}</textarea>
+                    <label class="{{ $label }}">Alamat</label>
+                    <textarea name="alamat" rows="3" placeholder="Alamat lengkap" class="{{ $input }}">{{ old('alamat', $user->alamat) }}</textarea>
                     @error('alamat') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                 </div>
             </div>
@@ -64,17 +64,16 @@
 
         <hr class="border-[#E1DCC9]">
 
-        {{-- Data usaha --}}
         <div>
-            <p class="flex items-center gap-2 text-sm font-medium text-[#1B4332] mb-4">
+            <p class="flex items-center gap-2 text-sm font-semibold text-[#1B4332] mb-4">
                 <i class="bi bi-briefcase"></i>
                 <span>Data Usaha</span>
             </p>
 
             <div class="space-y-4">
                 <div>
-                    <label class="block text-sm mb-1">Kelompok Tani (Poktan)</label>
-                    <select name="poktan_id" class="{{ $input }} bg-white">
+                    <label class="{{ $label }}">Kelompok Tani (Poktan)</label>
+                    <select name="poktan_id" class="{{ $input }}">
                         <option value="">-- Pilih Poktan --</option>
                         @foreach ($poktans as $poktan)
                             <option value="{{ $poktan->id }}" @selected(old('poktan_id', $user->poktan_id) == $poktan->id)>{{ $poktan->nama_kelompok }}</option>
@@ -84,8 +83,8 @@
                 </div>
 
                 <div>
-                    <label class="block text-sm mb-1">Konsumen Pengguna</label>
-                    <select name="konsumen_pengguna" x-model="konsumen" class="{{ $input }} bg-white">
+                    <label class="{{ $label }}">Konsumen Pengguna</label>
+                    <select name="konsumen_pengguna" x-model="konsumen" class="{{ $input }}">
                         <option value="">-- Pilih --</option>
                         @foreach ($konsumen as $key => $text)
                             <option value="{{ $key }}" @selected(old('konsumen_pengguna', $user->konsumen_pengguna) === $key)>{{ $text }}</option>
@@ -95,14 +94,14 @@
                 </div>
 
                 <div>
-                    <label class="block text-sm mb-1">Jenis Usaha</label>
-                    <input type="text" name="jenis_usaha" value="{{ old('jenis_usaha', $user->jenis_usaha) }}" class="{{ $input }}">
+                    <label class="{{ $label }}">Jenis Usaha</label>
+                    <input type="text" name="jenis_usaha" value="{{ old('jenis_usaha', $user->jenis_usaha) }}" placeholder="Contoh: Budidaya padi" class="{{ $input }}">
                     @error('jenis_usaha') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                 </div>
 
                 <div x-show="['usaha_perikanan','transportasi_motor_tempel'].includes(konsumen)" x-cloak>
-                    <label class="block text-sm mb-1">Nama Kapal</label>
-                    <input type="text" name="nama_kapal" value="{{ old('nama_kapal', $user->nama_kapal) }}" class="{{ $input }}">
+                    <label class="{{ $label }}">Nama Kapal</label>
+                    <input type="text" name="nama_kapal" value="{{ old('nama_kapal', $user->nama_kapal) }}" placeholder="Nama kapal" class="{{ $input }}">
                     @error('nama_kapal') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                 </div>
             </div>
@@ -110,9 +109,8 @@
 
         <hr class="border-[#E1DCC9]">
 
-        {{-- Ganti password --}}
         <div>
-            <p class="flex items-center gap-2 text-sm font-medium text-[#1B4332] mb-1">
+            <p class="flex items-center gap-2 text-sm font-semibold text-[#1B4332] mb-1">
                 <i class="bi bi-shield-lock"></i>
                 <span>Ganti Password</span>
             </p>
@@ -120,13 +118,13 @@
 
             <div class="grid sm:grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-sm mb-1">Password Baru</label>
-                    <input type="password" name="password" class="{{ $input }}">
+                    <label class="{{ $label }}">Password Baru</label>
+                    <input type="password" name="password" autocomplete="new-password" class="{{ $input }}">
                     @error('password') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                 </div>
                 <div>
-                    <label class="block text-sm mb-1">Konfirmasi Password</label>
-                    <input type="password" name="password_confirmation" class="{{ $input }}">
+                    <label class="{{ $label }}">Konfirmasi Password</label>
+                    <input type="password" name="password_confirmation" autocomplete="new-password" class="{{ $input }}">
                 </div>
             </div>
         </div>

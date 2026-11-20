@@ -15,7 +15,6 @@ use Illuminate\View\View;
 
 class PoktanController extends Controller
 {
-    // Poktan yang masih "memegang" anggotanya
     private const STATUS_TERIKAT = ['draft', 'diajukan', 'disetujui', 'ditolak'];
 
     private function minLuas(): float
@@ -28,7 +27,6 @@ class PoktanController extends Controller
         return (int) config('uptd.maks_anggota_poktan', 35);
     }
 
-    // TODO: konfirmasi minimal anggota resmi ke UPTD (bisa diisi di config/uptd.php: 'min_anggota_poktan')
     private function minAnggota(): int
     {
         return (int) config('uptd.min_anggota_poktan', 1);
@@ -91,7 +89,6 @@ class PoktanController extends Controller
                 'kode_undangan' => Poktan::buatKode(),
             ]);
 
-            // Ketua otomatis menjadi anggota pertama; datanya dilengkapi sendiri
             $poktan->anggota()->create([
                 'user_id' => $user->id,
                 'nama' => $user->name,
@@ -123,6 +120,18 @@ class PoktanController extends Controller
         $this->muat($poktan);
 
         return view('user.poktan.show', compact('poktan', 'isKetua', 'saya'));
+    }
+
+    /** Unduh SK Pengukuhan Poktan Resmi yang sudah ditandatangani Kepala UPTD */
+    public function skResmi(Request $request, Poktan $poktan)
+    {
+        $saya = $this->barisSaya($poktan);
+        $isKetua = $this->adalahKetua($poktan);
+
+        abort_unless($saya || $isKetua || (int) $request->user()->poktan_id === (int) $poktan->id, 403);
+        abort_unless($poktan->diserahkan_at && $poktan->file_sk_resmi && Storage::disk('public')->exists($poktan->file_sk_resmi), 404);
+
+        return Storage::disk('public')->response($poktan->file_sk_resmi);
     }
 
     // ------------------------------------------------------------------ ketua: kelola anggota
@@ -236,7 +245,6 @@ class PoktanController extends Controller
 
         $kode = strtoupper(trim((string) $request->query('kode')));
 
-        // Datang dari tautan undangan: langsung tampilkan konfirmasi tanpa mengetik kode lagi
         if ($kode !== '') {
             [$poktan, $galat] = $this->periksaKode($request->user(), $kode);
 
@@ -261,7 +269,7 @@ class PoktanController extends Controller
         return view('user.poktan.gabung', ['poktan' => null, 'kode' => '']);
     }
 
-        public function gabungCek(Request $request): RedirectResponse
+    public function gabungCek(Request $request): RedirectResponse
     {
         $request->validate(['kode' => ['required', 'string', 'max:20']]);
 
@@ -277,7 +285,7 @@ class PoktanController extends Controller
         $kode = strtoupper(trim($request->kode));
 
         [$poktan, $galat] = DB::transaction(function () use ($user, $kode) {
-            Poktan::where('kode_undangan', $kode)->lockForUpdate()->first(); // cegah dua orang masuk bersamaan melewati batas
+            Poktan::where('kode_undangan', $kode)->lockForUpdate()->first();
 
             [$p, $galat] = $this->periksaKode($user, $kode);
             if ($galat) {
@@ -353,7 +361,6 @@ class PoktanController extends Controller
             'file_sppt' => $berkas('file_sppt'),
         ]);
 
-        // NIK mengikuti akun dan tidak bisa diubah
         $data['nik'] = $request->user()->nik;
 
         $ganda = PoktanAnggota::where('nik', $data['nik'])
@@ -371,7 +378,7 @@ class PoktanController extends Controller
                 if ($saya->{$f}) {
                     Storage::disk('local')->delete($saya->{$f});
                 }
-                $data[$f] = $request->file($f)->store('poktan/anggota', 'local'); // disimpan privat
+                $data[$f] = $request->file($f)->store('poktan/anggota', 'local');
             } else {
                 unset($data[$f]);
             }
@@ -398,7 +405,6 @@ class PoktanController extends Controller
         return redirect()->route('user.poktan')->with('status', 'Anda keluar dari poktan.');
     }
 
-    // Berkas hanya bisa dibuka pemiliknya sendiri
     public function berkas(Request $request, Poktan $poktan, PoktanAnggota $anggota, string $jenis)
     {
         abort_unless(
@@ -436,7 +442,6 @@ class PoktanController extends Controller
             return Poktan::with('desa')->find($baris->poktan_id);
         }
 
-        // data lama / akun yang dihubungkan admin
         return $user->poktan_id ? Poktan::with('desa')->find($user->poktan_id) : null;
     }
 

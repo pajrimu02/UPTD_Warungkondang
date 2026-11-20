@@ -1,22 +1,28 @@
 @extends('layouts.ketua')
 
-@section('title', 'Surat Menunggu Tanda Tangan')
+@section('title', $isKepala ? 'Tanda Tangan SK Pengukuhan Poktan' : 'Surat Menunggu Tanda Tangan')
 
 @section('content')
 
     <div class="flex items-center justify-between gap-3 flex-wrap mb-6">
         <div>
-            <h1 class="text-2xl font-semibold text-[#1B4332] mb-1">Tanda Tangan Surat</h1>
-            <p class="text-sm text-[#5C6B62]">Cetak surat, tanda tangani, pindai menjadi PDF, lalu unggah di sini. Scan otomatis terkirim ke admin.</p>
+            <h1 class="text-2xl font-semibold text-[#1B4332] mb-1">
+                {{ $isKepala ? 'Tanda Tangan SK Pengukuhan Poktan' : 'Tanda Tangan Surat Rekomendasi' }}
+            </h1>
+            <p class="text-sm text-[#5C6B62]">
+                Cetak dokumen, tanda tangani, pindai menjadi PDF, lalu unggah di sini. Scan otomatis terkirim ke admin.
+            </p>    
         </div>
 
-        <form method="GET">
-            <select name="jenis" onchange="this.form.submit()" class="text-sm rounded-lg border-[#E1DCC9]">
-                <option value="">Semua Jenis</option>
-                <option value="solar" @selected($jenis === 'solar')>BBM (Solar)</option>
-                <option value="pupuk" @selected($jenis === 'pupuk')>Pupuk</option>
-            </select>
-        </form>
+        @unless ($isKepala)
+            <form method="GET">
+                <select name="jenis" onchange="this.form.submit()" class="text-sm rounded-lg border-[#E1DCC9]">
+                    <option value="">Semua Jenis</option>
+                    <option value="solar" @selected($jenis === 'solar')>BBM (Solar)</option>
+                    <option value="pupuk" @selected($jenis === 'pupuk')>Pupuk</option>
+                </select>
+            </form>
+        @endunless
     </div>
 
     @error('file_surat_resmi')
@@ -38,7 +44,7 @@
                         </div>
                     </div>
                     <a href="{{ $m['cetak'] }}" target="_blank" class="inline-flex items-center gap-2 border border-[#E1DCC9] text-[#1B4332] text-sm px-4 py-2 rounded-full">
-                        <i class="bi bi-printer"></i> Lihat / Cetak Surat
+                        <i class="bi bi-printer"></i> Lihat / Cetak {{ $isKepala ? 'SK' : 'Surat' }}
                     </a>
                 </div>
 
@@ -52,7 +58,7 @@
                 <p class="text-xs text-[#8C9086] mt-2">Hanya PDF, maksimal 4 MB.</p>
             </div>
         @empty
-            <div class="bg-white border border-[#E1DCC9] rounded-2xl px-6 py-12 text-center text-sm text-[#5C6B62]">Tidak ada surat yang menunggu.</div>
+            <div class="bg-white border border-[#E1DCC9] rounded-2xl px-6 py-12 text-center text-sm text-[#5C6B62]">Tidak ada dokumen yang menunggu.</div>
         @endforelse
     </div>
 
@@ -80,7 +86,7 @@
 
                     @unless ($m['terkirim'])
                         <form method="POST" action="{{ route('ketua.surat.hapus-scan', ['jenis' => $m['kunci'], 'id' => $m['id']]) }}"
-                              onsubmit="return confirm('Hapus scan surat {{ $m['nomor'] }}? Surat kembali ke daftar menunggu dan scan harus diunggah ulang.')">
+                              onsubmit="return confirm('Hapus scan {{ $m['nomor'] }}? Dokumen kembali ke daftar menunggu dan scan harus diunggah ulang.')">
                             @csrf @method('DELETE')
                             <button type="submit" title="Hapus scan"
                                     class="inline-flex items-center gap-1.5 h-9 px-4 rounded-full border border-red-200 text-red-600 text-xs font-medium hover:bg-red-50 transition">

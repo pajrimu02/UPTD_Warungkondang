@@ -44,8 +44,21 @@
             <p class="mt-1">{{ $poktan->catatan_admin ?? 'Tidak ada catatan dari admin.' }}</p>
         </div>
     @elseif ($poktan->disetujui_at)
-        <div class="text-sm bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl px-5 py-4 mb-6">
-            <i class="bi bi-patch-check-fill"></i> Poktan disetujui pada {{ $poktan->disetujui_at->translatedFormat('d F Y') }}.
+        <div class="flex items-center justify-between gap-3 flex-wrap text-sm bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl px-5 py-4 mb-6">
+            <div>
+                <i class="bi bi-patch-check-fill"></i> Poktan disetujui pada {{ $poktan->disetujui_at->translatedFormat('d F Y') }}.
+                @if ($poktan->nomor_sk)
+                    <span class="block sm:inline sm:ml-2">Nomor SK: <b>{{ $poktan->nomor_sk }}</b></span>
+                @endif
+            </div>
+            @if ($poktan->diserahkan_at && $poktan->file_sk_resmi)
+                <a href="{{ route('user.poktan.sk-resmi', $poktan) }}" target="_blank"
+                   class="inline-flex items-center gap-1.5 bg-[#1B4332] text-white text-xs font-semibold px-4 py-2 rounded-full shrink-0">
+                    <i class="bi bi-download"></i> Unduh SK Pengukuhan (PDF)
+                </a>
+            @elseif ($poktan->ttd_dikirim_at)
+                <span class="text-xs text-emerald-700">SK sedang dalam proses tanda tangan Kepala UPTD.</span>
+            @endif
         </div>
     @endif
 
