@@ -147,6 +147,12 @@ Route::get('/hubungi-kami', [HomeController::class, 'hubungiKami'])->name('hubun
     Route::get('/petani/{user}/edit', [AdminPetaniController::class, 'edit'])->name('petani.edit');
     Route::put('/petani/{user}', [AdminPetaniController::class, 'update'])->name('petani.update'); 
     Route::post('/petani/{user}/reset-password', [AdminPetaniController::class, 'resetPassword'])->name('petani.reset-password');
+    Route::delete('/poktan/{poktan}', [AdminPoktanController::class, 'destroy'])->name('poktan.destroy');
+    Route::get('/poktan', [AdminPoktanController::class, 'index'])->name('poktan.index');
+    Route::get('/poktan/{poktan}', [AdminPoktanController::class, 'show'])->name('poktan.show');
+    Route::get('/poktan/{poktan}/kelola', [AdminPoktanController::class, 'kelola'])->name('poktan.kelola');
+    Route::put('/poktan/{poktan}', [AdminPoktanController::class, 'update'])->name('poktan.update');
+    Route::put('/poktan/{poktan}/anggota/{anggota}', [AdminPoktanController::class, 'updateAnggota'])->name('poktan.anggota.update');
 });
 
 // KETUA
