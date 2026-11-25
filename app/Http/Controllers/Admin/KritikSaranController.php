@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\KritikSaran;
-use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class KritikSaranController extends Controller
@@ -28,17 +28,37 @@ class KritikSaranController extends Controller
         return view('admin.kritik-saran.show', compact('kritikSaran'));
     }
 
+    public function kelola(KritikSaran $kritikSaran): View
+    {
+        $kritikSaran->load('user');
+
+        return view('admin.kritik-saran.kelola', compact('kritikSaran'));
+    }
+
     public function update(Request $request, KritikSaran $kritikSaran): RedirectResponse
     {
         $validated = $request->validate([
-            'status' => ['required', 'in:baru,ditanggapi'],
-            'tanggapan_admin' => ['nullable', 'string', 'max:1000'],
+            'tanggapan_admin' => ['required', 'string', 'min:3', 'max:1000'],
+        ], [
+            'tanggapan_admin.required' => 'Tanggapan wajib diisi sebelum dikirim.',
         ]);
 
-        $kritikSaran->update($validated);
+        $kritikSaran->update([
+            'tanggapan_admin' => $validated['tanggapan_admin'],
+            'status' => 'ditanggapi',
+        ]);
 
         return redirect()
             ->route('admin.kritiksaran.show', $kritikSaran)
-            ->with('success', 'Tanggapan berhasil disimpan.');
+            ->with('success', 'Tanggapan berhasil disimpan dan status otomatis berubah menjadi Ditanggapi.');
+    }
+
+    public function destroy(KritikSaran $kritikSaran): RedirectResponse
+    {
+        $kritikSaran->delete();
+
+        return redirect()
+            ->route('admin.kritiksaran.index')
+            ->with('success', 'Kritik & saran berhasil dihapus.');
     }
 }

@@ -89,10 +89,10 @@ class SuratSolarController extends Controller
         ]);
 
         $validated['user_id'] = $request->user()->id;
-        $validated['poktan_id'] = $poktan?->id;  
+        $validated['poktan_id'] = $poktan?->id;
         $validated['spk_skor'] = $spk['skor'];
         $validated['spk_label'] = $spk['label'];
-        $validated['status'] = $spk['label'] === 'diajukan';
+        $validated['status'] = 'diajukan';
 
         SuratSolar::create($validated);
 
@@ -135,7 +135,7 @@ class SuratSolarController extends Controller
         ]);
 
         $baru->poktan_id = $request->user()->poktanDisetujui()?->id;
-        $baru->status = $spk['label'] === 'diajukan';
+        $baru->status = 'diajukan';
         $baru->spk_skor = $spk['skor'];
         $baru->spk_label = $spk['label'];
         $baru->save();

@@ -5,6 +5,8 @@
     <style>
         @page { margin: 1.5cm 2cm 1.5cm 2cm; }
         body { font-family: "Times New Roman", serif; font-size: 11px; color: #000; line-height: 1.35; margin: 0; }
+        .kop { border-bottom: 3px double #000; padding-bottom: 6px; margin-bottom: 10px; text-align: center; }
+        .kop p { margin: 0; line-height: 1.25; }
         h1 { font-size: 14px; text-align: center; margin: 0 0 2px; text-decoration: underline; }
         .nomor { text-align: center; font-weight: bold; margin: 0 0 10px; }
         p { margin: 0 0 4px; }
@@ -12,11 +14,13 @@
         ol li { margin-bottom: 3px; }
         table.data { border-collapse: collapse; }
         table.data td { padding: 1px 4px 1px 0; vertical-align: top; }
-        table.data td.l { width: 150px; }
+        table.data td.l { width: 155px; }
         table.mesin { width: 100%; border-collapse: collapse; margin: 4px 0 4px; }
         table.mesin th, table.mesin td { border: 1px solid #000; padding: 3px 4px; text-align: center; font-size: 10px; }
+        table.mesin th { background-color: #f4f4f4; }
         table.ttd { width: 100%; margin-top: 14px; page-break-inside: avoid; }
-        table.ttd td.kanan { width: 230px; text-align: center; vertical-align: top; }
+        table.ttd td.kanan { width: 240px; text-align: center; vertical-align: top; }
+        .lampiran { page-break-before: always; }
     </style>
 </head>
 <body>
@@ -39,7 +43,16 @@
     $sektor = \App\Http\Controllers\Auth\RegisteredUserController::KONSUMEN[$s->status_konsumen]
         ?? ucwords(str_replace('_', ' ', (string) $s->status_konsumen));
     $nama = $s->nama_pemohon ?? $s->user->name;
+    $kab = config('uptd.kabupaten');
+    $kec = config('uptd.kecamatan');
 @endphp
+
+    <div class="kop">
+        <p style="font-size: 12px; font-weight: bold;">PEMERINTAH KABUPATEN {{ strtoupper($kab) }}</p>
+        <p style="font-size: 13px; font-weight: bold;">DINAS TANAMAN PANGAN, HORTIKULTURA, PERKEBUNAN DAN KETAHANAN PANGAN</p>
+        <p style="font-size: 12px; font-weight: bold;">{{ strtoupper(config('uptd.nama')) }}</p>
+        <p style="font-size: 10px;">Kecamatan {{ $kec }}, Kabupaten {{ $kab }}, Provinsi Jawa Barat</p>
+    </div>
 
     <h1>SURAT REKOMENDASI</h1>
     <p class="nomor">Nomor: {{ $s->nomor_surat }}</p>
@@ -49,7 +62,7 @@
         <li>Undang-Undang Nomor 22 Tahun 2001 tentang Minyak dan Gas Bumi sebagaimana telah diubah dengan Undang-Undang Nomor 6 Tahun 2023 tentang Penetapan Peraturan Pemerintah Pengganti Undang-Undang Nomor 2 Tahun 2022 tentang Cipta Kerja menjadi Undang-Undang.</li>
         <li>Undang-Undang Nomor 23 Tahun 2014 tentang Pemerintahan Daerah sebagaimana telah beberapa kali diubah terakhir dengan Undang-Undang Nomor 6 Tahun 2023 tentang Penetapan Peraturan Pemerintah Pengganti Undang-Undang Nomor 2 Tahun 2022 tentang Cipta Kerja menjadi Undang-Undang.</li>
         <li>Peraturan Presiden Nomor 191 Tahun 2014 tentang Penyediaan, Pendistribusian dan Harga Jual Eceran Bahan Bakar Minyak sebagaimana telah beberapa kali terakhir dengan Peraturan Presiden Nomor 117 Tahun 2021 tentang Perubahan Ketiga atas Peraturan Presiden Nomor 191 Tahun 2014 tentang Penyediaan, Pendistribusian dan Harga Jual Eceran Bahan Bakar Minyak.</li>
-        <li>Peraturan Badan Pengatur Hilir Minyak dan Gas Bumi Nomor 2 Tahun 2023 tentang Penerbitan Surat Rekomendasi Untuk Pembelian Jenis BBM Minyak Tertentu dan Jenis BBM Khusus Penugasan.</li>
+        <li>Peraturan Badan Pengatur Hilir Minyak dan Gas Bumi Nomor 2 Tahun 2023 tentang Penerbitan Surat Rekomendasi Untuk Pembelian Jenis BBM Tertentu dan Jenis BBM Khusus Penugasan.</li>
     </ol>
 
     <p>Dengan ini memberikan rekomendasi kepada:</p>
@@ -59,7 +72,7 @@
         <tr><td class="l">Alamat</td><td>: {{ $s->alamat }}</td></tr>
         <tr><td class="l">Nama Usaha</td><td>: {{ strtoupper($s->jenis_usaha) }}</td></tr>
         <tr><td class="l">Sektor Konsumen Pengguna</td><td>: {{ $sektor }}</td></tr>
-        <tr><td class="l">Jenis Usaha</td><td>: {{ $s->poktan ? 'Pertanian Per Anggota Kelompok Tani' : 'Perorangan' }}</td></tr>
+        <tr><td class="l">Jenis Usaha</td><td>: {{ $s->poktan ? 'Pertanian Per Anggota Kelompok Tani (' . $s->poktan->nama_kelompok . ')' : 'Perorangan' }}</td></tr>
         @if ($s->nama_kapal)
             <tr><td class="l">Nama Kapal</td><td>: {{ $s->nama_kapal }}</td></tr>
         @endif
@@ -116,12 +129,46 @@
             <td></td>
             <td class="kanan">
                 <p>{{ config('uptd.tempat') }}, {{ ($s->disetujui_at ?? now())->translatedFormat('d F Y') }}</p>
-                <p>{{ config('uptd.jabatan_penandatangan') }}</p>
+                <p><b>{{ config('uptd.jabatan_penandatangan') }}</b></p>
                 <br><br><br><br>
                 <p><b><u>{{ config('uptd.nama_penandatangan') }}</u></b><br>NIP. {{ config('uptd.nip_penandatangan') }}</p>
             </td>
         </tr>
     </table>
+
+    {{-- ============ LAMPIRAN KARTU KENDALI PENYALURAN BBM (BPH MIGAS 2/2023) ============ --}}
+    <div class="lampiran">
+        <p style="margin:0;"><b>LAMPIRAN SURAT REKOMENDASI</b></p>
+        <p style="margin:0;">Nomor : {{ $s->nomor_surat }}</p>
+        <p style="margin:0 0 8px;">Nama Konsumen Pengguna : {{ strtoupper($nama) }} (Alokasi: {{ $angka($s->alokasi_volume) }} Liter/Minggu)</p>
+
+        <p style="text-align:center; font-weight:bold; font-size:12px; margin:8px 0;">BUKU PENCATATAN RIWAYAT PEMBELIAN JENIS BBM TERTENTU (JBT)</p>
+
+        <table class="mesin">
+            <thead>
+                <tr>
+                    <th width="28">No</th>
+                    <th width="90">Tanggal Pembelian</th>
+                    <th width="95">Jumlah Pembelian (Liter)</th>
+                    <th width="95">Sisa Kuota Minggu Ini (Liter)</th>
+                    <th width="110">Nama & TTD Petugas SPBU</th>
+                    <th>Paraf Pembeli & Keterangan</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for ($baris = 1; $baris <= 14; $baris++)
+                    <tr>
+                        <td style="height:22px;">{{ $baris }}</td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                @endfor
+            </tbody>
+        </table>
+    </div>
 
 </body>
 </html>

@@ -27,11 +27,10 @@
    <p class="text-sm text-[#5C6B62] mb-6">Data pemohon diambil dari profil kamu. Periksa dan lengkapi. Kolom bertanda * wajib diisi.</p>
 
     <div class="bg-[#EAF2EC] border border-[#2D6A4F]/20 rounded-xl p-4 mb-6 text-sm">
-        
             @if ($poktan)
                 <div class="bg-[#EAF2EC] border border-[#2D6A4F]/20 rounded-xl p-4 mb-6 text-sm">
-                    <p class="text-[#5C6B62]">Poktan</p>
-                    <p class="font-medium text-[#1B4332]">{{ $poktan->nama_kelompok }}</p>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-[#2D6A4F]">Terdaftar dalam Kelompok Tani</p>
+                    <p class="font-semibold text-[#1B4332] mt-0.5">{{ $poktan->nama_kelompok }}</p>
                     <p class="text-[#5C6B62] mt-0.5">Ketua: {{ $poktan->nama_ketua }}@if ($poktan->desa) · Desa {{ $poktan->desa->nama }}@endif</p>
                 </div>
             @endif
