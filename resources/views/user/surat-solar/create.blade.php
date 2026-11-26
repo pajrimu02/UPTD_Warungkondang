@@ -24,18 +24,15 @@
     </a>
 
     <h1 class="text-2xl font-semibold text-[#1B4332] mb-1">Ajukan Surat Rekomendasi Solar</h1>
-   <p class="text-sm text-[#5C6B62] mb-6">Data pemohon diambil dari profil kamu. Periksa dan lengkapi. Kolom bertanda * wajib diisi.</p>
+    <p class="text-sm text-[#5C6B62] mb-6">Data pemohon diambil dari profil kamu. Periksa dan lengkapi. Kolom bertanda * wajib diisi.</p>
 
-    <div class="bg-[#EAF2EC] border border-[#2D6A4F]/20 rounded-xl p-4 mb-6 text-sm">
-            @if ($poktan)
-                <div class="bg-[#EAF2EC] border border-[#2D6A4F]/20 rounded-xl p-4 mb-6 text-sm">
-                    <p class="text-xs font-semibold uppercase tracking-wider text-[#2D6A4F]">Terdaftar dalam Kelompok Tani</p>
-                    <p class="font-semibold text-[#1B4332] mt-0.5">{{ $poktan->nama_kelompok }}</p>
-                    <p class="text-[#5C6B62] mt-0.5">Ketua: {{ $poktan->nama_ketua }}@if ($poktan->desa) · Desa {{ $poktan->desa->nama }}@endif</p>
-                </div>
-            @endif
-        </p>
-    </div>
+    @if ($poktan)
+        <div class="bg-[#EAF2EC] border border-[#2D6A4F]/20 rounded-xl p-4 mb-6 text-sm">
+            <p class="text-xs font-semibold uppercase tracking-wider text-[#2D6A4F]">Terdaftar dalam Kelompok Tani</p>
+            <p class="font-semibold text-[#1B4332] mt-0.5">{{ $poktan->nama_kelompok }}</p>
+            <p class="text-[#5C6B62] mt-0.5">Ketua: {{ $poktan->nama_ketua }}@if ($poktan->desa) · Desa {{ $poktan->desa->nama }}@endif</p>
+        </div>
+    @endif
 
     <form method="POST" action="{{ route('user.surat-solar.store') }}" enctype="multipart/form-data" class="bg-white border border-[#E1DCC9] rounded-2xl p-6 space-y-8">
         @csrf
@@ -97,9 +94,12 @@
 
         <hr class="border-[#E1DCC9]">
 
-        {{-- Data alat/mesin --}}
+        {{-- Data permohonan pembelian JBT/JBKP & alat/mesin --}}
         <div>
-            <p class="flex items-center gap-2 text-sm font-medium text-[#1B4332] mb-4"><i class="bi bi-gear-wide-connected"></i><span>Data Alat/Mesin</span></p>
+            <p class="flex items-start gap-2 text-sm font-medium text-[#1B4332] mb-4">
+                <i class="bi bi-gear-wide-connected mt-0.5"></i>
+                <span>Mengajukan permohonan pembelian JBT atau JBKP menggunakan Surat Rekomendasi dengan data/informasi sebagai berikut:</span>
+            </p>
             <div class="space-y-4">
                 <div>
                     <label class="block text-sm mb-1.5">Jenis Alat/Mesin *</label>
@@ -176,6 +176,10 @@
                 <div>
                     <label class="block text-sm mb-1.5">Estimasi Sisa JBT/JBKP (Liter) <span class="text-[#5C6B62] font-normal">(opsional)</span></label>
                     <input type="number" step="0.01" name="estimasi_sisa_liter" value="{{ old('estimasi_sisa_liter') }}" class="{{ $inputClass }}">
+                </div>
+
+                <div class="rounded-xl bg-[#FAF9F4] border border-[#E1DCC9] p-4 text-xs text-[#5C6B62] leading-relaxed">
+                    Apabila Surat Rekomendasi tidak dipergunakan sebagaimana mestinya dan tidak sesuai dengan ketentuan peraturan perundang-undangan, kami bersedia Surat Rekomendasi dicabut dan diproses secara hukum sesuai dengan ketentuan peraturan perundang-undangan.
                 </div>
             </div>
         </div>

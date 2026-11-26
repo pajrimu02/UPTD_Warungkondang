@@ -17,6 +17,22 @@
     <h1 class="text-2xl font-semibold text-[#1B4332] mb-1">Ajukan Surat Rekomendasi Pupuk</h1>
     <p class="text-sm text-[#5C6B62] mb-6">Data petani diambil dari anggota poktan. Lengkapi yang masih kosong. Kolom bertanda * wajib diisi.</p>
 
+    <div class="flex items-start gap-3 bg-[#EBF5EE] border border-[#2D6A4F]/25 text-[#1B4332] rounded-2xl p-4 mb-6">
+        <i class="bi bi-patch-check-fill text-lg text-[#2D6A4F] mt-0.5"></i>
+        <div class="text-sm leading-relaxed">
+            <p class="font-medium">
+                Terdaftar sebagai pengelola Kelompok Tani <strong>{{ $poktan->nama_kelompok }}</strong>
+                @if ($poktan->desa)
+                    (Desa {{ $poktan->desa->nama_desa ?? $poktan->desa->nama }})
+                @endif
+            </p>
+            <p class="text-xs text-[#2D6A4F] mt-0.5">
+                Pengajuan e-RDKK pupuk bersubsidi ini diajukan secara kolektif untuk <strong>{{ $poktan->anggota->count() }} anggota</strong> terdaftar. Centang anggota yang akan diikutsertakan pada periode ini.
+            </p>
+        </div>
+    </div>
+
+    
     @if ($errors->any())
         <div class="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl p-4 mb-6">
             Ada isian yang belum lengkap atau salah. Periksa kolom yang ditandai.
@@ -34,11 +50,26 @@
                     <label class="block text-sm mb-1.5">Nama Poktan</label>
                     <input type="text" value="{{ $poktan->nama_kelompok }}" readonly class="{{ $inputClass }} bg-[#F5F3EC]">
                 </div>
-                <div>
-                    <label class="block text-sm mb-1.5">Nama Penyuluh *</label>
-                    <input type="text" name="nama_penyuluh" value="{{ old('nama_penyuluh') }}" class="{{ $inputClass }}">
-                    @error('nama_penyuluh') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-                </div>
+                    <div>
+                        <label class="block text-sm mb-1.5">Nama Penyuluh (PPL) *</label>
+                        @if ($penyuluhOtomatis)
+                            <input type="text" name="nama_penyuluh" value="{{ $penyuluhOtomatis['nama'] }}"
+                                readonly class="{{ $inputClass }} bg-[#F5F3EC] text-[#1B4332] font-medium">
+                            <p class="text-xs text-[#5C6B62] mt-1">
+                                Otomatis sesuai wilayah Desa {{ $poktan->desa?->nama_desa ?? $poktan->desa?->nama }}
+                            </p>
+                        @else
+                            <select name="nama_penyuluh" class="{{ $inputClass }} bg-white">
+                                <option value="">-- Pilih Penyuluh Pertanian --</option>
+                                @foreach ($penyuluhList as $ppl)
+                                    <option value="{{ $ppl['nama'] }}" @selected(old('nama_penyuluh') === $ppl['nama'])>
+                                        {{ $ppl['nama'] }} (Desa: {{ implode(', ', $ppl['wilayah_desa'] ?? []) }})
+                                    </option>
+                                @endforeach
+                            </select>
+                        @endif
+                        @error('nama_penyuluh') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                    </div>
                 <div>
                     <label class="block text-sm mb-1.5">Kode Desa</label>
                     <input type="text" name="kode_desa" value="{{ old('kode_desa', $poktan->desa?->kode_desa) }}" class="{{ $inputClass }}">
@@ -48,12 +79,25 @@
                     <input type="text" name="gapoktan" value="{{ old('gapoktan') }}" class="{{ $inputClass }}">
                 </div>
                 <div>
-                    <label class="block text-sm mb-1.5">Kode Kios Pengecer</label>
-                    <input type="text" name="kode_kios" value="{{ old('kode_kios') }}" class="{{ $inputClass }}">
+                    <label class="block text-sm mb-1.5">Nama Kios Pengecer</label>
+                    <select id="nama_kios" name="nama_kios" class="{{ $inputClass }} bg-white">
+                        <option value="" data-kode="">-- Pilih Kios Pengecer --</option>
+                        @foreach ($kiosList as $kios)
+                            <option value="{{ $kios['nama'] }}"
+                                    data-kode="{{ $kios['kode'] }}"
+                                    @selected(old('nama_kios') === $kios['nama'])>
+                                {{ $kios['nama'] }} ({{ $kios['desa'] }})
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('nama_kios') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                 </div>
                 <div>
-                    <label class="block text-sm mb-1.5">Nama Kios Pengecer</label>
-                    <input type="text" name="nama_kios" value="{{ old('nama_kios') }}" class="{{ $inputClass }}">
+                    <label class="block text-sm mb-1.5">Kode Kios Pengecer</label>
+                    <input type="text" id="kode_kios" name="kode_kios" value="{{ old('kode_kios') }}"
+                           readonly placeholder="Otomatis terisi saat kios dipilih"
+                           class="{{ $inputClass }} bg-[#F5F3EC] text-[#5C6B62]">
+                    @error('kode_kios') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                 </div>
             </div>
         </div>
@@ -133,5 +177,20 @@
             </button>
         </div>
     </form>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const selectKios = document.getElementById('nama_kios');
+            const inputKode = document.getElementById('kode_kios');
+
+            function syncKodeKios() {
+                const selected = selectKios.options[selectKios.selectedIndex];
+                inputKode.value = selected ? (selected.getAttribute('data-kode') || '') : '';
+            }
+
+            selectKios.addEventListener('change', syncKodeKios);
+            syncKodeKios();
+        });
+    </script>
 
 @endsection

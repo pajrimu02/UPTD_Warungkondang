@@ -1,4 +1,5 @@
-<?php 
+<?php
+
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
@@ -7,6 +8,7 @@ use App\Models\SuratPupuk;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class SuratPupukController extends Controller
@@ -17,6 +19,22 @@ class SuratPupukController extends Controller
             'error',
             'Surat pupuk hanya bisa diajukan oleh pengaju poktan atau ketua poktan yang sudah disetujui. Pastikan NIK di profil sama dengan NIK ketua.'
         );
+    }
+
+    private function penyuluhUntukPoktan(Poktan $poktan): ?array
+    {
+        $poktan->loadMissing('desa');
+        $namaDesa = trim((string) ($poktan->desa?->nama_desa ?? $poktan->desa?->nama ?? ''));
+
+        if ($namaDesa === '') {
+            return null;
+        }
+
+        return collect(config('uptd.penyuluh', []))->first(function ($ppl) use ($namaDesa) {
+            $wilayah = array_map(fn ($d) => mb_strtolower(trim($d)), $ppl['wilayah_desa'] ?? []);
+
+            return in_array(mb_strtolower($namaDesa), $wilayah, true);
+        });
     }
 
     public function index(Request $request): View
@@ -40,7 +58,11 @@ class SuratPupukController extends Controller
             return redirect()->route('user.surat-pengajuan.index')->with('error', 'Poktan belum punya anggota.');
         }
 
-        return view('user.surat-pupuk.create', compact('poktan'));
+        $penyuluhOtomatis = $this->penyuluhUntukPoktan($poktan);
+        $penyuluhList = config('uptd.penyuluh', []);
+        $kiosList = config('kios_pupuk', []);
+
+        return view('user.surat-pupuk.create', compact('poktan', 'penyuluhOtomatis', 'penyuluhList', 'kiosList'));
     }
 
     public function store(Request $request): RedirectResponse
@@ -52,17 +74,24 @@ class SuratPupukController extends Controller
 
         $anggotaIds = $poktan->anggota()->pluck('id')->map(fn ($i) => (string) $i)->all();
 
-        // hanya petani yang dicentang dan benar-benar anggota poktan ini
         $items = collect($request->input('items', []))
             ->filter(fn ($row, $id) => ! empty($row['include']) && in_array((string) $id, $anggotaIds, true))
             ->all();
         $request->merge(['items' => $items]);
 
+        $penyuluhOtomatis = $this->penyuluhUntukPoktan($poktan);
+        if ($penyuluhOtomatis) {
+            $request->merge(['nama_penyuluh' => $penyuluhOtomatis['nama']]);
+        }
+
+        $validPenyuluh = collect(config('uptd.penyuluh', []))->pluck('nama')->all();
+        $kiosList = collect(config('kios_pupuk', []));
+
         $data = $request->validate([
-            'nama_penyuluh' => 'required|string|max:255',
+            'nama_penyuluh' => ['required', 'string', 'max:255', Rule::in($validPenyuluh)],
             'kode_desa' => 'nullable|string|max:20',
             'kode_kios' => 'nullable|string|max:255',
-            'nama_kios' => 'nullable|string|max:255',
+            'nama_kios' => ['nullable', 'string', 'max:255', Rule::in($kiosList->pluck('nama')->all())],
             'gapoktan' => 'nullable|string|max:255',
 
             'items' => 'required|array|min:1',
@@ -85,6 +114,9 @@ class SuratPupukController extends Controller
             'items.required' => 'Pilih minimal satu petani.',
             'items.*.nik.digits' => 'NIK harus 16 digit angka.',
         ]);
+
+        $kiosDipilih = $kiosList->firstWhere('nama', $data['nama_kios'] ?? null);
+        $data['kode_kios'] = $kiosDipilih['kode'] ?? null;
 
         $surat = DB::transaction(function () use ($data, $poktan, $request) {
             $surat = SuratPupuk::create([
@@ -109,13 +141,11 @@ class SuratPupukController extends Controller
                     'organik' => (float) ($m['organik'] ?? 0),
                 ])->all();
 
-                // array_merge: nilai di array kedua menimpa $row (musim sudah dibersihkan)
                 $surat->items()->create(array_merge($row, [
                     'poktan_anggota_id' => $anggotaId,
                     'musim' => $musim,
                 ]));
 
-                // simpan biodata ke anggota supaya pengajuan berikutnya terisi otomatis
                 $poktan->anggota()->whereKey($anggotaId)->update([
                     'tempat_lahir' => $row['tempat_lahir'],
                     'tanggal_lahir' => $row['tanggal_lahir'],

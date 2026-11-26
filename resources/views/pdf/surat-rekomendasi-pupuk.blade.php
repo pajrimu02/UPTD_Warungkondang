@@ -1,161 +1,178 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
     <meta charset="UTF-8">
+    <title>Surat Pengajuan RDKK Pupuk Bersubsidi</title>
     <style>
-        @page { size: A4 landscape; margin: 1cm 1.2cm; }
-        body { font-family: Arial, Helvetica, sans-serif; font-size: 10px; color: #000; margin: 0; }
-        h1 { font-size: 13px; text-align: center; margin: 0 0 10px; }
-        table.info { margin: 0 0 8px; }
-        table.info td { padding: 1px 6px 1px 0; vertical-align: top; font-size: 10px; }
-        table.info td.l { width: 70px; }
-        table.rdkk { width: 100%; border-collapse: collapse; }
-        table.rdkk th, table.rdkk td { border: 1px solid #000; padding: 2px; }
-        table.rdkk th { text-align: center; font-weight: bold; vertical-align: middle; font-size: 8px; }
-        table.rdkk td { font-size: 9px; }
-        table.rdkk td.c { text-align: center; }
-        table.rdkk td.r { text-align: right; }
-        table.rdkk tr { page-break-inside: avoid; }
-        .kecil { font-size: 7px; color: #333; }
-        table.ttd { width: 100%; margin-top: 22px; page-break-inside: avoid; }
-        table.ttd td { text-align: center; vertical-align: top; font-size: 10px; }
-        .pb { page-break-before: always; }
+        @page { size: A4 landscape; margin: 1.2cm; }
+        body { font-family: "Times New Roman", Times, serif; font-size: 10pt; color: #000; line-height: 1.3; }
+        .kop { text-align: center; border-bottom: 2px solid #000; padding-bottom: 6px; margin-bottom: 12px; }
+        .kop h3 { margin: 0; font-size: 11pt; text-transform: uppercase; font-weight: normal; }
+        .kop h2 { margin: 2px 0 0; font-size: 13pt; text-transform: uppercase; }
+        .kop p { margin: 2px 0 0; font-size: 9.5pt; }
+        .meta-table { width: 100%; margin-bottom: 10px; border-collapse: collapse; }
+        .meta-table td { padding: 2px 4px; vertical-align: top; }
+        .data-table { width: 100%; border-collapse: collapse; font-size: 8.2pt; }
+        .data-table th, .data-table td { border: 1px solid #000; padding: 3.5px 4px; text-align: center; }
+        .data-table th { background-color: #f0f0f0; font-weight: bold; }
+        .text-left { text-align: left !important; }
+        .text-right { text-align: right !important; }
+        .ttd-table { width: 100%; margin-top: 18px; border-collapse: collapse; text-align: center; }
+        .ttd-table td { width: 33.3%; vertical-align: top; }
+        .ttd-space { height: 55px; }
     </style>
 </head>
 <body>
 @php
-    $s = $suratPupuk;
-    $items = $s->items;
-
+    $surat = $suratPupuk;
+    $poktan = $surat->poktan;
+    $namaDesa = $poktan->desa?->nama_desa ?? $poktan->desa?->nama ?? config('uptd.tempat', 'Warungkondang');
+    $subsektorUtama = $surat->items->pluck('subsektor')->unique()->implode(', ') ?: 'Tanaman Pangan';
     $fmt = fn ($n) => rtrim(rtrim(number_format((float) $n, 2, ',', '.'), '0'), ',') ?: '0';
-
-    $pupuk = ['urea' => 'UREA', 'sp36' => 'SP-36', 'za' => 'ZA', 'npk' => 'NPK', 'organik' => 'ORGANIK'];
-
-    // Nilai satu kolom: $mt = 0, 1, 2 (MT I, II, III)
-    $nilai = fn ($it, $k, $mt) => (float) data_get(collect($it->musim)->values()->get($mt), $k, 0);
-
-    // Luas tanam satu petani: lahan yang sama ditanam tiap musim, jadi diambil nilai terbesar (bukan dijumlah)
-    $luasPetani = fn ($it) => (float) (collect($it->musim)->map(fn ($m) => (float) data_get($m, 'luas', 0))->max() ?? 0);
-
-    $desaTeks = ($s->poktan->desa?->nama ?? '-') . ($s->kode_desa ? ' (' . $s->kode_desa . ')' : '');
-
-    // Sub sektor: tampilkan yang dipilih di form (kalau campuran, dipisah koma)
-    $subsektorTeks = $items->pluck('subsektor')->filter()->unique()->implode(', ') ?: '-';
 @endphp
 
-@foreach (['ringkas', 'rinci'] as $mode)
-
-    @php
-        $baris = $mode === 'ringkas'
-            ? collect([[
-                'utama' => $s->poktan->nama_kelompok ?: '-',
-                'kecil' => $s->gapoktan ? 'Gapoktan ' . $s->gapoktan : null,
-                'items' => $items,
-            ]])
-            : $items->values()->map(fn ($it) => [
-                'utama' => $it->nama_petani,
-                'kecil' => 'NIK ' . $it->nik,
-                'items' => collect([$it]),
-            ]);
-    @endphp
-
-    <div class="{{ $mode === 'rinci' ? 'pb' : '' }}">
-
-        @if ($mode === 'ringkas')
-            <h1>E-RDKK PUPUK BERSUBSIDI</h1>
-            <table class="info">
-                <tr><td class="l">Desa</td><td>= {{ $desaTeks }}</td></tr>
-                <tr><td class="l">Sub Sektor</td><td>= {{ $subsektorTeks }}</td></tr>
-            </table>
-        @else
-            <h1>LAMPIRAN: RINCIAN PER PETANI</h1>
-            <table class="info">
-                <tr><td class="l">Ketua Poktan</td><td>= {{ $s->poktan->nama_ketua ?: '-' }}</td></tr>
-                <tr><td class="l">Desa</td><td>= {{ $desaTeks }}</td></tr>
-                <tr><td class="l">Poktan</td><td>= {{ $s->poktan->nama_kelompok }}</td></tr>
-                <tr><td class="l">Kios</td><td>= {{ trim(($s->kode_kios ? $s->kode_kios . ' - ' : '') . $s->nama_kios) ?: '-' }}</td></tr>
-                <tr><td class="l">Penyuluh</td><td>= {{ $s->nama_penyuluh ?: '-' }}</td></tr>
-            </table>
-        @endif
-
-        <table class="rdkk">
-            <thead>
-                <tr>
-                    <th rowspan="2" style="width:3%;">No</th>
-                    <th rowspan="2" style="width:14%;">{{ $mode === 'ringkas' ? 'Poktan' : 'Nama Petani' }}</th>
-                    <th rowspan="2" style="width:6%;">Luas<br>Tanam<br>(Ha)</th>
-                    @foreach ($pupuk as $label)
-                        <th colspan="4">{{ $label }}</th>
-                    @endforeach
-                </tr>
-                <tr>
-                    @foreach ($pupuk as $label)
-                        <th style="width:3.4%;">MT<br>I</th>
-                        <th style="width:3.4%;">MT<br>II</th>
-                        <th style="width:3.4%;">MT<br>III</th>
-                        <th style="width:4.8%;">Jml</th>
-                    @endforeach
-                </tr>
-            </thead>
-            <tbody>
-                @foreach ($baris as $n => $b)
-                    @php $grp = $b['items']; @endphp
-                    <tr>
-                        <td class="c">{{ $n + 1 }}</td>
-                        <td>
-                            {{ $b['utama'] }}
-                            @if ($b['kecil'])<br><span class="kecil">{{ $b['kecil'] }}</span>@endif
-                        </td>
-                        <td class="r">{{ $fmt($grp->sum($luasPetani)) }}</td>
-                        @foreach ($pupuk as $k => $label)
-                            @php $jml = 0; @endphp
-                            @foreach ([0, 1, 2] as $mt)
-                                @php $v = $grp->sum(fn ($it) => $nilai($it, $k, $mt)); $jml += $v; @endphp
-                                <td class="r">{{ $v ? $fmt($v) : '-' }}</td>
-                            @endforeach
-                            <td class="r"><b>{{ $jml ? $fmt($jml) : '-' }}</b></td>
-                        @endforeach
-                    </tr>
-                @endforeach
-
-                {{-- Baris Total --}}
-                <tr>
-                    <td colspan="2" class="c"><b>Total</b></td>
-                    <td class="r"><b>{{ $fmt($items->sum($luasPetani)) }}</b></td>
-                    @foreach ($pupuk as $k => $label)
-                        @php $jml = 0; @endphp
-                        @foreach ([0, 1, 2] as $mt)
-                            @php $v = $items->sum(fn ($it) => $nilai($it, $k, $mt)); $jml += $v; @endphp
-                            <td class="r"><b>{{ $v ? $fmt($v) : '-' }}</b></td>
-                        @endforeach
-                        <td class="r"><b>{{ $jml ? $fmt($jml) : '-' }}</b></td>
-                    @endforeach
-                </tr>
-            </tbody>
-        </table>
-
-        @if ($mode === 'ringkas')
-            <table class="ttd">
-                <tr>
-                    <td style="width:40%;">
-                        Menyetujui,<br>
-                        Kepala Desa
-                        <br><br><br><br><br>
-                        ..............................
-                    </td>
-                    <td style="width:20%;"></td>
-                    <td style="width:40%;">
-                        {{ config('uptd.tempat') }}, {{ ($s->disetujui_at ?? now())->translatedFormat('d F Y') }}<br>
-                        {{ config('uptd.jabatan_penandatangan') }}
-                        <br><br><br><br><br>
-                        <b><u>{{ config('uptd.nama_penandatangan') }}</u></b><br>
-                        NIP. {{ config('uptd.nip_penandatangan') }}
-                    </td>
-                </tr>
-            </table>
-        @endif
+    <div class="kop">
+        <h3>{{ config('uptd.nama', 'UPTD Pelayanan Pertanian Warungkondang') }}</h3>
+        <h2>RENCANA DEFINITIF KEBUTUHAN KELOMPOK (RDKK)</h2>
+        <h2>PENGAJUAN PUPUK BERSUBSIDI SEKTOR PERTANIAN</h2>
+        <p>Nomor: <strong>{{ $surat->nomor_surat ?? '-' }}</strong> · Tahun Anggaran {{ $surat->created_at?->format('Y') ?? date('Y') }}</p>
     </div>
 
-@endforeach
+    <table class="meta-table">
+        <tr>
+            <td width="18%">Nama Kelompok Tani</td>
+            <td width="32%">: <strong>{{ $poktan->nama_kelompok }}</strong></td>
+            <td width="20%">Desa / Kode Desa</td>
+            <td width="30%">: {{ $namaDesa }} ({{ $surat->kode_desa ?? '-' }})</td>
+        </tr>
+        <tr>
+            <td>Gapoktan</td>
+            <td>: {{ $surat->gapoktan ?? '-' }}</td>
+            <td>Kode Kios Pengecer</td>
+            <td>: {{ $surat->kode_kios ?? '-' }}</td>
+        </tr>
+        <tr>
+            <td>Subsektor</td>
+            <td>: {{ $subsektorUtama }}</td>
+            <td>Nama Kios Pengecer</td>
+            <td>: {{ $surat->nama_kios ?? '-' }}</td>
+        </tr>
+        <tr>
+            <td>Nama Penyuluh (PPL)</td>
+            <td>: {{ $surat->nama_penyuluh }}</td>
+            <td>Kecamatan / Kabupaten</td>
+            <td>: {{ config('uptd.kecamatan', 'Warungkondang') }} / {{ config('uptd.kabupaten', 'Cianjur') }}</td>
+        </tr>
+    </table>
+
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th rowspan="2" width="3%">No</th>
+                <th rowspan="2" width="14%">Nama Petani / NIK</th>
+                <th rowspan="2" width="13%">Tempat, Tgl Lahir &amp;<br>Nama Ibu Kandung</th>
+                <th rowspan="2" width="12%">Alamat</th>
+                <th colspan="6">Musim Tanam 1 (MT-1)</th>
+                <th colspan="6">Musim Tanam 2 (MT-2)</th>
+                <th colspan="6">Musim Tanam 3 (MT-3)</th>
+            </tr>
+            <tr>
+                <th>Komoditas</th>
+                <th>Luas<br>(Ha)</th>
+                <th>Urea<br>(kg)</th>
+                <th>NPK<br>(kg)</th>
+                <th>ZA/SP36<br>(kg)</th>
+                <th>Org<br>(kg)</th>
+
+                <th>Komoditas</th>
+                <th>Luas<br>(Ha)</th>
+                <th>Urea<br>(kg)</th>
+                <th>NPK<br>(kg)</th>
+                <th>ZA/SP36<br>(kg)</th>
+                <th>Org<br>(kg)</th>
+
+                <th>Komoditas</th>
+                <th>Luas<br>(Ha)</th>
+                <th>Urea<br>(kg)</th>
+                <th>NPK<br>(kg)</th>
+                <th>ZA/SP36<br>(kg)</th>
+                <th>Org<br>(kg)</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach ($surat->items as $index => $item)
+                @php
+                    $mt1 = $item->musim[0] ?? [];
+                    $mt2 = $item->musim[1] ?? [];
+                    $mt3 = $item->musim[2] ?? [];
+                @endphp
+                <tr>
+                    <td>{{ $index + 1 }}</td>
+                    <td class="text-left">
+                        <strong>{{ $item->nama_petani }}</strong><br>
+                        NIK: {{ $item->nik }}
+                    </td>
+                    <td class="text-left">
+                        {{ $item->tempat_lahir }}, {{ $item->tanggal_lahir?->format('d-m-Y') }}<br>
+                        Ibu: {{ $item->nama_ibu_kandung }}
+                    </td>
+                    <td class="text-left">{{ $item->alamat }}</td>
+
+                    <!-- MT 1 -->
+                    <td>{{ $mt1['komoditas'] ?? '-' }}</td>
+                    <td>{{ $fmt($mt1['luas'] ?? 0) }}</td>
+                    <td>{{ $fmt($mt1['urea'] ?? 0) }}</td>
+                    <td>{{ $fmt($mt1['npk'] ?? 0) }}</td>
+                    <td>{{ $fmt(($mt1['za'] ?? 0) + ($mt1['sp36'] ?? 0)) }}</td>
+                    <td>{{ $fmt($mt1['organik'] ?? 0) }}</td>
+
+                    <!-- MT 2 -->
+                    <td>{{ $mt2['komoditas'] ?? '-' }}</td>
+                    <td>{{ $fmt($mt2['luas'] ?? 0) }}</td>
+                    <td>{{ $fmt($mt2['urea'] ?? 0) }}</td>
+                    <td>{{ $fmt($mt2['npk'] ?? 0) }}</td>
+                    <td>{{ $fmt(($mt2['za'] ?? 0) + ($mt2['sp36'] ?? 0)) }}</td>
+                    <td>{{ $fmt($mt2['organik'] ?? 0) }}</td>
+
+                    <!-- MT 3 -->
+                    <td>{{ $mt3['komoditas'] ?? '-' }}</td>
+                    <td>{{ $fmt($mt3['luas'] ?? 0) }}</td>
+                    <td>{{ $fmt($mt3['urea'] ?? 0) }}</td>
+                    <td>{{ $fmt($mt3['npk'] ?? 0) }}</td>
+                    <td>{{ $fmt(($mt3['za'] ?? 0) + ($mt3['sp36'] ?? 0)) }}</td>
+                    <td>{{ $fmt($mt3['organik'] ?? 0) }}</td>
+                </tr>
+            @endforeach
+        </tbody>
+    </table>
+
+    <p style="font-size: 8.5pt; margin-top: 8px;">
+        Demikian Rencana Definitif Kebutuhan Kelompok (RDKK) ini disusun dengan sebenar-benarnya berdasarkan data anggota kelompok tani yang sah untuk digunakan sebagai dasar penyaluran pupuk bersubsidi.
+    </p>
+
+    <table class="ttd-table">
+        <tr>
+            <td>
+                Mengetahui,<br>
+                Penyuluh Pertanian Lapangan (PPL)
+                <div class="ttd-space"></div>
+                <strong><u>{{ $surat->nama_penyuluh }}</u></strong>
+            </td>
+            <td>
+                Menyetujui,<br>
+                {{ config('uptd.jabatan_penandatangan', 'Kepala Sub Bagian Tata Usaha') }}
+                <div class="ttd-space"></div>
+                <strong><u>{{ config('uptd.nama_penandatangan', 'Jamaludin Murdani, S.P.') }}</u></strong><br>
+                NIP. {{ config('uptd.nip_penandatangan', '198811212017061001') }}
+            </td>
+            <td>
+                {{ $namaDesa }}, {{ ($surat->disetujui_at ?? now())->translatedFormat('d F Y') }}<br>
+                Ketua Kelompok Tani {{ $poktan->nama_kelompok }}
+                <div class="ttd-space"></div>
+                <strong><u>{{ $poktan->nama_ketua ?: '(....................................)' }}</u></strong>
+            </td>
+        </tr>
+    </table>
+
 </body>
 </html>
