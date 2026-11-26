@@ -113,10 +113,10 @@
                 <tr><td>b. Tempat Pengambilan</td><td>: {{ $s->tempat_pengambilan }}</td></tr>
                 <tr><td>c. Nomor Penyalur</td><td>: {{ $s->nomor_penyalur }}</td></tr>
                 <tr><td>d. Alamat Penyalur</td><td>: {{ $s->alamat_penyalur }}</td></tr>
+                <tr><td>e. Alat Pembelian yang digunakan</td><td>: {{ $s->alat_pembelian }}</td></tr>
             </table>
         </li>
-        <li>Alat Pembelian yang digunakan: {{ $s->alat_pembelian }}.</li>
-        <li>Jangka Waktu pemberlakuan Surat Rekomendasi sampai dengan tanggal {{ $s->berlaku_sampai?->translatedFormat('d F Y') }}.</li>
+        <li>Jangka Waktu pemberlakuan Surat Rekomendasi sampai dengan tanggal {{ $s->berlaku_sampai?->translatedFormat('d F Y') }} (maksimal 3 bulan sejak diterbitkan).</li>
         <li>Penyalur SPBU/SPBKB/SPBN/SPBUN wajib mencatat riwayat pembelian Konsumen Pengguna dalam buku sebagaimana terlampir.</li>
         <li>Surat Rekomendasi ini hanya berlaku untuk perorangan sesuai dengan identitas pemohon Surat Rekomendasi.</li>
         <li>Jenis BBM Tertentu yang diperoleh tidak untuk diperjualbelikan kembali.</li>
@@ -136,22 +136,24 @@
         </tr>
     </table>
 
-    {{-- ============ LAMPIRAN KARTU KENDALI PENYALURAN BBM (BPH MIGAS 2/2023) ============ --}}
+    {{-- ============ LAMPIRAN II PERATURAN BPH MIGAS NO. 2 TAHUN 2023 ============ --}}
     <div class="lampiran">
         <p style="margin:0;"><b>LAMPIRAN SURAT REKOMENDASI</b></p>
         <p style="margin:0;">Nomor : {{ $s->nomor_surat }}</p>
-        <p style="margin:0 0 8px;">Nama Konsumen Pengguna : {{ strtoupper($nama) }} (Alokasi: {{ $angka($s->alokasi_volume) }} Liter/Minggu)</p>
+        <p style="margin:0;">Nama Konsumen Pengguna : {{ strtoupper($nama) }} (NIK: {{ $s->nik }})</p>
+        <p style="margin:0 0 8px;">Alokasi Volume : {{ $angka($s->alokasi_volume) }} Liter/Minggu · Nomor Penyalur: {{ $s->nomor_penyalur }}</p>
 
         <p style="text-align:center; font-weight:bold; font-size:12px; margin:8px 0;">BUKU PENCATATAN RIWAYAT PEMBELIAN JENIS BBM TERTENTU (JBT)</p>
 
         <table class="mesin">
             <thead>
                 <tr>
-                    <th width="28">No</th>
-                    <th width="90">Tanggal Pembelian</th>
-                    <th width="95">Jumlah Pembelian (Liter)</th>
-                    <th width="95">Sisa Kuota Minggu Ini (Liter)</th>
-                    <th width="110">Nama & TTD Petugas SPBU</th>
+                    <th width="26">No</th>
+                    <th width="85">Tanggal Pembelian</th>
+                    <th width="85">Jumlah Pembelian (Liter)</th>
+                    <th width="85">Sisa Kuota Minggu Ini (Liter)</th>
+                    <th width="95">Alat Pembelian / No. Polisi</th>
+                    <th width="105">Nama & TTD Petugas SPBU</th>
                     <th>Paraf Pembeli & Keterangan</th>
                 </tr>
             </thead>
@@ -164,10 +166,12 @@
                         <td></td>
                         <td></td>
                         <td></td>
+                        <td></td>
                     </tr>
                 @endfor
             </tbody>
         </table>
+        <p style="font-size:9px; margin-top:4px;"><i>Catatan: Masa berlaku Surat Rekomendasi dan Buku Pencatatan ini maksimal 3 (tiga) bulan sejak tanggal penerbitan sesuai Peraturan BPH Migas Nomor 2 Tahun 2023.</i></p>
     </div>
 
 </body>

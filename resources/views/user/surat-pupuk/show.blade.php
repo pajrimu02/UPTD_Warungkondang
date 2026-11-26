@@ -4,9 +4,7 @@
 
 @section('content')
 
-    <a href="{{ route('user.surat-pupuk.index') }}" class="flex items-center gap-1.5 text-sm text-[#5C6B62] mb-4">
-        <i class="bi bi-arrow-left"></i><span>Kembali</span>
-    </a>
+    <x-tombol-kembali :href="route('user.surat-pupuk.index')" />
 
     <div class="flex items-center justify-between mb-6">
         <h1 class="text-2xl font-semibold text-[#1B4332]">Detail Pengajuan</h1>

@@ -19,9 +19,7 @@
         $bolehAjukanCepat = $terakhir && $terakhir->created_at->diffInMonths(now()) >= 3;
     @endphp
 
-    <a href="{{ route('user.surat-pengajuan.index') }}" class="flex items-center gap-1.5 text-sm text-[#5C6B62] mb-4">
-        <i class="bi bi-arrow-left"></i><span>Kembali</span>
-    </a>
+    <x-tombol-kembali :href="route('user.surat-pengajuan.index')" />
 
     <div class="flex items-start justify-between gap-4 flex-wrap mb-6">
         <div>

@@ -11,10 +11,7 @@
         $fileUrl = $data->file_surat_resmi ? asset('storage/' . $data->file_surat_resmi) : null;
     @endphp
 
-    <a href="{{ route('user.surat-solar.index', $data) }}" class="flex items-center gap-1.5 text-sm text-[#5C6B62] mb-4">
-        <i class="bi bi-arrow-left"></i>
-        <span>Kembali</span>
-    </a>
+    <x-tombol-kembali :href="route('user.surat-solar.index')" />
 
     <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>

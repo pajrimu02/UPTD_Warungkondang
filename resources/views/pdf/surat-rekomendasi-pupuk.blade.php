@@ -2,24 +2,25 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Surat Pengajuan RDKK Pupuk Bersubsidi</title>
+    <title>Surat Pengajuan e-RDKK Pupuk Bersubsidi</title>
     <style>
-        @page { size: A4 landscape; margin: 1.2cm; }
-        body { font-family: "Times New Roman", Times, serif; font-size: 10pt; color: #000; line-height: 1.3; }
-        .kop { text-align: center; border-bottom: 2px solid #000; padding-bottom: 6px; margin-bottom: 12px; }
-        .kop h3 { margin: 0; font-size: 11pt; text-transform: uppercase; font-weight: normal; }
-        .kop h2 { margin: 2px 0 0; font-size: 13pt; text-transform: uppercase; }
-        .kop p { margin: 2px 0 0; font-size: 9.5pt; }
-        .meta-table { width: 100%; margin-bottom: 10px; border-collapse: collapse; }
-        .meta-table td { padding: 2px 4px; vertical-align: top; }
-        .data-table { width: 100%; border-collapse: collapse; font-size: 8.2pt; }
-        .data-table th, .data-table td { border: 1px solid #000; padding: 3.5px 4px; text-align: center; }
+        @page { size: A4 landscape; margin: 1.1cm; }
+        body { font-family: "Times New Roman", Times, serif; font-size: 9.5pt; color: #000; line-height: 1.3; }
+        .kop { text-align: center; border-bottom: 3px double #000; padding-bottom: 5px; margin-bottom: 10px; }
+        .kop h3 { margin: 0; font-size: 10.5pt; text-transform: uppercase; font-weight: bold; }
+        .kop h2 { margin: 2px 0 0; font-size: 12.5pt; text-transform: uppercase; }
+        .kop p { margin: 2px 0 0; font-size: 9pt; }
+        .dasar { font-size: 8.5pt; margin-bottom: 8px; }
+        .meta-table { width: 100%; margin-bottom: 8px; border-collapse: collapse; font-size: 9pt; }
+        .meta-table td { padding: 1.5px 4px; vertical-align: top; }
+        .data-table { width: 100%; border-collapse: collapse; font-size: 7.6pt; }
+        .data-table th, .data-table td { border: 1px solid #000; padding: 3px 3px; text-align: center; }
         .data-table th { background-color: #f0f0f0; font-weight: bold; }
         .text-left { text-align: left !important; }
         .text-right { text-align: right !important; }
-        .ttd-table { width: 100%; margin-top: 18px; border-collapse: collapse; text-align: center; }
+        .ttd-table { width: 100%; margin-top: 14px; border-collapse: collapse; text-align: center; font-size: 9.5pt; page-break-inside: avoid; }
         .ttd-table td { width: 33.3%; vertical-align: top; }
-        .ttd-space { height: 55px; }
+        .ttd-space { height: 48px; }
     </style>
 </head>
 <body>
@@ -32,18 +33,21 @@
 @endphp
 
     <div class="kop">
-        <h3>{{ config('uptd.nama', 'UPTD Pelayanan Pertanian Warungkondang') }}</h3>
-        <h2>RENCANA DEFINITIF KEBUTUHAN KELOMPOK (RDKK)</h2>
-        <h2>PENGAJUAN PUPUK BERSUBSIDI SEKTOR PERTANIAN</h2>
-        <p>Nomor: <strong>{{ $surat->nomor_surat ?? '-' }}</strong> · Tahun Anggaran {{ $surat->created_at?->format('Y') ?? date('Y') }}</p>
+        <h3>PEMERINTAH KABUPATEN {{ strtoupper(config('uptd.kabupaten', 'CIANJUR')) }} · {{ strtoupper(config('uptd.nama', 'UPTD PELAYANAN PERTANIAN WARUNGKONDANG')) }}</h3>
+        <h2>RENCANA DEFINITIF KEBUTUHAN KELOMPOK (e-RDKK) PUPUK BERSUBSIDI</h2>
+        <p>Nomor Surat: <strong>{{ $surat->nomor_surat ?? '-' }}</strong> · Alokasi Tahun Tanam {{ $surat->created_at?->format('Y') ?? date('Y') }}</p>
     </div>
+
+    <p class="dasar">
+        <strong>Dasar Hukum:</strong> Peraturan Menteri Pertanian Nomor 10 Tahun 2022 jo. Peraturan Menteri Pertanian Nomor 01 Tahun 2024 tentang Tata Cara Penetapan Alokasi dan Harga Eceran Tertinggi Pupuk Bersubsidi Sektor Pertanian.
+    </p>
 
     <table class="meta-table">
         <tr>
-            <td width="18%">Nama Kelompok Tani</td>
-            <td width="32%">: <strong>{{ $poktan->nama_kelompok }}</strong></td>
-            <td width="20%">Desa / Kode Desa</td>
-            <td width="30%">: {{ $namaDesa }} ({{ $surat->kode_desa ?? '-' }})</td>
+            <td width="16%">ID / Nama Poktan</td>
+            <td width="34%">: <strong>{{ str_pad((string) $poktan->id, 4, '0', STR_PAD_LEFT) }} — {{ $poktan->nama_kelompok }}</strong></td>
+            <td width="18%">Desa / Kode Desa</td>
+            <td width="32%">: {{ $namaDesa }} ({{ $surat->kode_desa ?? $poktan->desa?->kode_desa ?? '-' }})</td>
         </tr>
         <tr>
             <td>Gapoktan</td>
@@ -68,35 +72,38 @@
     <table class="data-table">
         <thead>
             <tr>
-                <th rowspan="2" width="3%">No</th>
-                <th rowspan="2" width="14%">Nama Petani / NIK</th>
-                <th rowspan="2" width="13%">Tempat, Tgl Lahir &amp;<br>Nama Ibu Kandung</th>
-                <th rowspan="2" width="12%">Alamat</th>
-                <th colspan="6">Musim Tanam 1 (MT-1)</th>
-                <th colspan="6">Musim Tanam 2 (MT-2)</th>
-                <th colspan="6">Musim Tanam 3 (MT-3)</th>
+                <th rowspan="2" width="2.5%">No</th>
+                <th rowspan="2" width="13%">Nama Petani / NIK</th>
+                <th rowspan="2" width="12%">Tempat, Tgl Lahir &amp;<br>Nama Ibu Kandung</th>
+                <th rowspan="2" width="10%">Alamat</th>
+                <th colspan="7">Periode Tanam I (MT-1)</th>
+                <th colspan="7">Periode Tanam II (MT-2)</th>
+                <th colspan="7">Periode Tanam III (MT-3)</th>
             </tr>
             <tr>
                 <th>Komoditas</th>
                 <th>Luas<br>(Ha)</th>
                 <th>Urea<br>(kg)</th>
                 <th>NPK<br>(kg)</th>
-                <th>ZA/SP36<br>(kg)</th>
+                <th>NPK Form.<br>(kg)</th>
                 <th>Org<br>(kg)</th>
+                <th>ZA<br>(kg)</th>
 
                 <th>Komoditas</th>
                 <th>Luas<br>(Ha)</th>
                 <th>Urea<br>(kg)</th>
                 <th>NPK<br>(kg)</th>
-                <th>ZA/SP36<br>(kg)</th>
+                <th>NPK Form.<br>(kg)</th>
                 <th>Org<br>(kg)</th>
+                <th>ZA<br>(kg)</th>
 
                 <th>Komoditas</th>
                 <th>Luas<br>(Ha)</th>
                 <th>Urea<br>(kg)</th>
                 <th>NPK<br>(kg)</th>
-                <th>ZA/SP36<br>(kg)</th>
+                <th>NPK Form.<br>(kg)</th>
                 <th>Org<br>(kg)</th>
+                <th>ZA<br>(kg)</th>
             </tr>
         </thead>
         <tbody>
@@ -123,31 +130,34 @@
                     <td>{{ $fmt($mt1['luas'] ?? 0) }}</td>
                     <td>{{ $fmt($mt1['urea'] ?? 0) }}</td>
                     <td>{{ $fmt($mt1['npk'] ?? 0) }}</td>
-                    <td>{{ $fmt(($mt1['za'] ?? 0) + ($mt1['sp36'] ?? 0)) }}</td>
+                    <td>{{ $fmt($mt1['npk_formula'] ?? 0) }}</td>
                     <td>{{ $fmt($mt1['organik'] ?? 0) }}</td>
+                    <td>{{ $fmt($mt1['za'] ?? 0) }}</td>
 
                     <!-- MT 2 -->
                     <td>{{ $mt2['komoditas'] ?? '-' }}</td>
                     <td>{{ $fmt($mt2['luas'] ?? 0) }}</td>
                     <td>{{ $fmt($mt2['urea'] ?? 0) }}</td>
                     <td>{{ $fmt($mt2['npk'] ?? 0) }}</td>
-                    <td>{{ $fmt(($mt2['za'] ?? 0) + ($mt2['sp36'] ?? 0)) }}</td>
+                    <td>{{ $fmt($mt2['npk_formula'] ?? 0) }}</td>
                     <td>{{ $fmt($mt2['organik'] ?? 0) }}</td>
+                    <td>{{ $fmt($mt2['za'] ?? 0) }}</td>
 
                     <!-- MT 3 -->
                     <td>{{ $mt3['komoditas'] ?? '-' }}</td>
                     <td>{{ $fmt($mt3['luas'] ?? 0) }}</td>
                     <td>{{ $fmt($mt3['urea'] ?? 0) }}</td>
                     <td>{{ $fmt($mt3['npk'] ?? 0) }}</td>
-                    <td>{{ $fmt(($mt3['za'] ?? 0) + ($mt3['sp36'] ?? 0)) }}</td>
+                    <td>{{ $fmt($mt3['npk_formula'] ?? 0) }}</td>
                     <td>{{ $fmt($mt3['organik'] ?? 0) }}</td>
+                    <td>{{ $fmt($mt3['za'] ?? 0) }}</td>
                 </tr>
             @endforeach
         </tbody>
     </table>
 
-    <p style="font-size: 8.5pt; margin-top: 8px;">
-        Demikian Rencana Definitif Kebutuhan Kelompok (RDKK) ini disusun dengan sebenar-benarnya berdasarkan data anggota kelompok tani yang sah untuk digunakan sebagai dasar penyaluran pupuk bersubsidi.
+    <p style="font-size: 8.5pt; margin-top: 6px;">
+        Demikian Rencana Definitif Kebutuhan Kelompok (e-RDKK) ini disusun sesuai data induk kependudukan (NIK &amp; Nama Ibu Kandung) serta kepemilikan lahan anggota kelompok tani yang sah untuk diinput ke sistem e-RDKK Kementerian Pertanian.
     </p>
 
     <table class="ttd-table">

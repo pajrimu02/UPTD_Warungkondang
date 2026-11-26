@@ -19,9 +19,7 @@
         ];
     @endphp
 
-    <a href="{{ route('user.surat-pengajuan.index') }}" class="flex items-center gap-1.5 text-sm text-[#5C6B62] mb-4">
-        <i class="bi bi-arrow-left"></i><span>Kembali</span>
-    </a>
+    <x-tombol-kembali :href="route('user.surat-solar.index')" />
 
     <h1 class="text-2xl font-semibold text-[#1B4332] mb-1">Ajukan Surat Rekomendasi Solar</h1>
     <p class="text-sm text-[#5C6B62] mb-6">Data pemohon diambil dari profil kamu. Periksa dan lengkapi. Kolom bertanda * wajib diisi.</p>

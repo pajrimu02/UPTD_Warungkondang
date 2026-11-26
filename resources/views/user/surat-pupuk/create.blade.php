@@ -10,9 +10,7 @@
         $subsektor = ['Tanaman Pangan', 'Hortikultura', 'Perkebunan', 'Peternakan', 'Petambak'];
     @endphp
 
-    <a href="{{ route('user.surat-pupuk.index') }}" class="flex items-center gap-1.5 text-sm text-[#5C6B62] mb-4">
-        <i class="bi bi-arrow-left"></i><span>Kembali</span>
-    </a>
+    <x-tombol-kembali :href="route('user.surat-pupuk.index')" />
 
     <h1 class="text-2xl font-semibold text-[#1B4332] mb-1">Ajukan Surat Rekomendasi Pupuk</h1>
     <p class="text-sm text-[#5C6B62] mb-6">Data petani diambil dari anggota poktan. Lengkapi yang masih kosong. Kolom bertanda * wajib diisi.</p>

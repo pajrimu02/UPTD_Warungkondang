@@ -13,13 +13,13 @@
         .nomor { text-align: center; margin: 2px 0 10px; }
         p { margin: 0 0 6px; text-align: justify; }
         table.kv td { vertical-align: top; padding: 1px 4px 1px 0; }
-        table.kv td.l { width: 115px; }
+        table.kv td.l { width: 135px; }
         table.isi { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
         table.isi td { vertical-align: top; padding: 1px 0; }
         table.isi td.l { width: 95px; }
         table.isi td.n { width: 20px; }
         table.tabel { width: 100%; border-collapse: collapse; margin: 6px 0; }
-        table.tabel th, table.tabel td { border: 1px solid #000; padding: 4px 6px; font-size: 11px; }
+        table.tabel th, table.tabel td { border: 1px solid #000; padding: 4px 6px; font-size: 10.5px; }
         table.tabel th { text-align: center; background-color: #f4f4f4; }
         table.tabel tr { page-break-inside: avoid; }
         table.ttd { width: 100%; margin-top: 14px; page-break-inside: avoid; }
@@ -42,6 +42,7 @@
     $tanggal = $p->getAttribute('tanggal_sk') ?: ($p->disetujui_at ?: now());
     $namaPoktan = strtoupper($p->nama_kelompok);
     $desa = $p->desa?->nama ?? '-';
+    $kodeDesa = $p->desa?->kode_desa ?? '-';
     $kec = config('uptd.kecamatan');
     $kab = config('uptd.kabupaten');
     $ketua = $aktif->firstWhere('jabatan', 'ketua');
@@ -82,7 +83,7 @@
                 <table width="100%">
                     <tr><td width="20" valign="top">1.</td><td><p>Undang-Undang Nomor 19 Tahun 2013 tentang Perlindungan dan Pemberdayaan Petani (Lembaran Negara Republik Indonesia Tahun 2013 Nomor 131, Tambahan Lembaran Negara Republik Indonesia Nomor 5433);</p></td></tr>
                     <tr><td valign="top">2.</td><td><p>Peraturan Menteri Pertanian Nomor 67/Permentan/SM.050/12/2016 tentang Pembinaan Kelembagaan Petani (Berita Negara Republik Indonesia Tahun 2016 Nomor 2038);</p></td></tr>
-                    <tr><td valign="top">3.</td><td><p>Peraturan Menteri Pertanian Nomor 10 Tahun 2022 tentang Tata Cara Penetapan Alokasi dan Harga Eceran Tertinggi Pupuk Bersubsidi Sektor Pertanian;</p></td></tr>
+                    <tr><td valign="top">3.</td><td><p>Peraturan Menteri Pertanian Nomor 03/Permentan/SM.200/1/2018 tentang Pedoman Penyelenggaraan Penyuluhan Pertanian;</p></td></tr>
                     <tr><td valign="top">4.</td><td><p>Peraturan Bupati {{ $kab }} tentang Pembentukan, Kedudukan, Susunan Organisasi, Tugas dan Fungsi serta Tata Kerja Unit Pelaksana Teknis Daerah (UPTD) pada Dinas Pertanian Kabupaten {{ $kab }};</p></td></tr>
                 </table>
             </td>
@@ -98,9 +99,10 @@
                 <p>Mengukuhkan Kelompok Tani "{{ $p->nama_kelompok }}" sebagai kelembagaan petani di wilayah kerja {{ config('uptd.nama') }} dengan identitas sebagai berikut:</p>
                 <table class="kv">
                     <tr><td class="l">Nama Kelompok</td><td>: {{ $p->nama_kelompok }}</td></tr>
+                    <tr><td class="l">ID / Kode Poktan</td><td>: {{ str_pad((string) $p->id, 4, '0', STR_PAD_LEFT) }} (Registrasi SIMLUHTAN)</td></tr>
                     <tr><td class="l">Ketua Kelompok</td><td>: {{ $ketua?->nama ?? $p->nama_ketua ?? '-' }}</td></tr>
                     <tr><td class="l">Alamat Sekretariat</td><td>: {{ $p->alamat ?: '-' }}</td></tr>
-                    <tr><td class="l">Desa / Kecamatan</td><td>: Desa {{ $desa }}, Kecamatan {{ $kec }}, Kabupaten {{ $kab }}</td></tr>
+                    <tr><td class="l">Desa / Kode Desa</td><td>: Desa {{ $desa }} ({{ $kodeDesa }}), Kec. {{ $kec }}, Kab. {{ $kab }}</td></tr>
                     <tr><td class="l">Jumlah Anggota</td><td>: {{ $jumlah }} orang</td></tr>
                     <tr><td class="l">Total Luas Lahan</td><td>: {{ $fmt($luas) }} hektare</td></tr>
                     <tr><td class="l">Kelas Kemampuan</td><td>: Kelas Pemula</td></tr>
@@ -125,23 +127,24 @@
         </tr>
     </table>
 
-    {{-- ============ LAMPIRAN ============ --}}
+    {{-- ============ LAMPIRAN STANDAR SIMLUHTAN ============ --}}
     <div class="lampiran">
         <table style="margin-bottom: 10px;">
             <tr><td width="75">Lampiran</td><td width="12">:</td><td>Keputusan Kepala {{ config('uptd.nama') }}</td></tr>
             <tr><td>Nomor</td><td>:</td><td>{{ $nomor }}</td></tr>
             <tr><td>Tanggal</td><td>:</td><td>{{ \Illuminate\Support\Carbon::parse($tanggal)->translatedFormat('d F Y') }}</td></tr>
-            <tr><td>Tentang</td><td>:</td><td>Pengukuhan Kelompok Tani "{{ $p->nama_kelompok }}"</td></tr>
+            <tr><td>Tentang</td><td>:</td><td>Pengukuhan Kelompok Tani "{{ $p->nama_kelompok }}" (Desa {{ $desa }})</td></tr>
         </table>
 
         <p class="judul" style="margin-bottom:4px;">A. SUSUNAN PENGURUS KELOMPOK TANI</p>
         <table class="tabel">
             <thead>
                 <tr>
-                    <th width="30">No</th>
+                    <th width="28">No</th>
                     <th>Nama Lengkap</th>
-                    <th width="130">NIK</th>
-                    <th width="110">Jabatan</th>
+                    <th width="125">NIK</th>
+                    <th width="125">Nomor KK</th>
+                    <th width="95">Jabatan</th>
                 </tr>
             </thead>
             <tbody>
@@ -150,23 +153,26 @@
                         <td align="center">{{ $i + 1 }}</td>
                         <td>{{ $a->nama }}</td>
                         <td align="center">{{ $a->nik ?: '-' }}</td>
+                        <td align="center">{{ $a->nomor_kk ?: '-' }}</td>
                         <td align="center">{{ ucfirst($a->jabatan) }}</td>
                     </tr>
                 @empty
-                    <tr><td colspan="4" align="center">-</td></tr>
+                    <tr><td colspan="5" align="center">-</td></tr>
                 @endforelse
             </tbody>
         </table>
 
-        <p class="judul" style="margin:12px 0 4px;">B. DAFTAR ANGGOTA DAN LUAS LAHAN GARAPAN</p>
+        <p class="judul" style="margin:12px 0 4px;">B. DAFTAR ANGGOTA DAN LUAS LAHAN GARAPAN (DATA SIMLUHTAN)</p>
         <table class="tabel">
             <thead>
                 <tr>
-                    <th width="30">No</th>
+                    <th width="26">No</th>
                     <th>Nama Anggota</th>
-                    <th width="130">NIK</th>
-                    <th width="90">Jabatan</th>
-                    <th width="95">Luas Lahan (ha)</th>
+                    <th width="115">NIK</th>
+                    <th width="125">Tempat, Tgl Lahir</th>
+                    <th>Alamat</th>
+                    <th width="72">Jabatan</th>
+                    <th width="75">Luas Lahan (ha)</th>
                 </tr>
             </thead>
             <tbody>
@@ -175,12 +181,14 @@
                         <td align="center">{{ $i + 1 }}</td>
                         <td>{{ $a->nama }}</td>
                         <td align="center">{{ $a->nik ?: '-' }}</td>
+                        <td>{{ $a->tempat_lahir ? $a->tempat_lahir . ', ' . $a->tanggal_lahir?->format('d-m-Y') : '-' }}</td>
+                        <td>{{ $a->alamat ?: '-' }}</td>
                         <td align="center">{{ ucfirst($a->jabatan) }}</td>
                         <td align="right">{{ $fmt($a->luas_lahan_ha) }}</td>
                     </tr>
                 @endforeach
                 <tr>
-                    <td colspan="4" align="right"><b>Total Keseluruhan ({{ $jumlah }} Anggota)</b></td>
+                    <td colspan="6" align="right"><b>Total Keseluruhan ({{ $jumlah }} Anggota)</b></td>
                     <td align="right"><b>{{ $fmt($luas) }}</b></td>
                 </tr>
             </tbody>
