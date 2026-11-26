@@ -17,16 +17,9 @@
         ];
     @endphp
 
-    <div class="flex items-center justify-between gap-3 flex-wrap mb-4">
-        <a href="{{ route('admin.poktan.index') }}" class="flex items-center gap-1.5 text-sm text-[#5C6B62] hover:text-[#1B4332]">
-            <i class="bi bi-arrow-left"></i><span>Kembali ke Daftar</span>
-        </a>
-
-        <a href="{{ route('admin.poktan.show', $poktan) }}"
-           class="inline-flex items-center gap-1.5 border border-[#E1DCC9] bg-white text-[#1B4332] text-xs font-medium px-4 py-2 rounded-full hover:border-[#2D6A4F]">
-            <i class="bi bi-eye"></i> Lihat Detail Profil
-        </a>
-    </div>
+     
+    <x-tombol-kembali :href="route('admin.poktan.index')" />
+           
 
     <div class="mb-6">
         <div class="flex items-center gap-3 flex-wrap">
@@ -414,9 +407,16 @@
                     <p class="text-sm text-[#5C6B62]">Poktan masih berstatus <b>draft</b>. Keputusan baru bisa diambil setelah ketua mengajukan.</p>
                 @elseif ($poktan->status === 'disetujui')
                     <div class="space-y-3">
-                        <a href="{{ route('admin.poktan.sk-preview', $poktan) }}" target="_blank"
+                        <a href="{{ route('admin.poktan.kelola', $poktan) }}" target="_blank"
                            class="w-full inline-flex items-center justify-center gap-2 border border-[#E1DCC9] text-[#1B4332] text-sm px-4 py-2 rounded-full hover:border-[#2D6A4F]">
                             <i class="bi bi-file-earmark-pdf"></i> Unduh PDF SK ({{ $poktan->nomor_sk }})
+                        </a>
+
+                        @elseif ($poktan->status === 'disetujui')
+                    <div class="space-y-3">
+                        <a href="{{ route('admin.poktan.sk-preview', $poktan) }}" target="_blank"
+                           class="w-full inline-flex items-center justify-center gap-2 border border-[#E1DCC9] text-[#1B4332] text-sm px-4 py-2 rounded-full hover:border-[#2D6A4F]">
+                            <i class="bi bi-file-earmark-pdf"></i> Lihat Draft PDF SK ({{ $poktan->nomor_sk }})
                         </a>
 
                         @if (! $poktan->ttd_dikirim_at)
@@ -428,9 +428,10 @@
                                 </button>
                             </form>
                         @elseif (! $poktan->ttd_kembali_at)
-                            <p class="text-xs bg-amber-50 border border-amber-200 text-amber-800 rounded-xl px-3.5 py-2.5">
-                                <i class="bi bi-hourglass-split"></i> Menunggu tanda tangan Kepala UPTD (dikirim {{ $poktan->ttd_dikirim_at->translatedFormat('d M Y, H:i') }}).
-                            </p>
+                            <div class="text-xs bg-amber-50 border border-amber-200 text-amber-800 rounded-xl px-3.5 py-3 leading-relaxed">
+                                <p class="font-semibold flex items-center gap-1.5"><i class="bi bi-hourglass-split"></i> Terkirim ke Kepala UPTD</p>
+                                <p class="mt-1">SK otomatis diteruskan untuk tanda tangan Kepala UPTD pada {{ $poktan->ttd_dikirim_at->translatedFormat('d M Y, H:i') }}.</p>
+                            </div>
                         @elseif (! $poktan->diserahkan_at)
                             <a href="{{ asset('storage/' . $poktan->file_sk_resmi) }}" target="_blank"
                                class="w-full inline-flex items-center justify-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium px-4 py-2 rounded-full">

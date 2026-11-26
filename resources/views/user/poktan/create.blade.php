@@ -7,10 +7,9 @@
     @php
         $inputClass = 'w-full rounded-lg border border-[#E1DCC9] px-3.5 py-2.5 text-sm focus:outline-none focus:border-[#2D6A4F] focus:ring-2 focus:ring-[#2D6A4F]/20';
     @endphp
-
-    <a href="{{ route('user.poktan') }}" class="flex items-center gap-1.5 text-sm text-[#5C6B62] mb-4">
-        <i class="bi bi-arrow-left"></i><span>Kembali</span>
-    </a>
+    <div>
+        <x-tombol-kembali :href="route('user.poktan')" />
+    </div>
 
     <h1 class="text-2xl font-semibold text-[#1B4332] mb-6">Ajukan Poktan</h1>
 

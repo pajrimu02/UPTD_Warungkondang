@@ -63,11 +63,11 @@ class PoktanController extends Controller
         ]);
     }
 
-    public function update(Request $request, Poktan$poktan): RedirectResponse
+    public function update(Request $request, Poktan $poktan): RedirectResponse
     {
         abort_unless($poktan->status === 'diajukan', 403);
 
-        $data =$request->validate([
+        $data = $request->validate([
             'keputusan' => ['required', 'in:disetujui,ditolak'],
             'catatan_admin' => ['nullable', 'string', 'max:1000'],
         ]);
@@ -83,22 +83,21 @@ class PoktanController extends Controller
                 'disetujui_at' => null,
             ]);
 
-            return redirect()->route('admin.poktan.show', $poktan)
+            return redirect()->route('admin.poktan.kelola', $poktan)
                 ->with('success', 'Poktan "' . $poktan->nama_kelompok . '" ditolak.');
         }
 
-        
-
         // Disetujui: semua syarat harus terpenuhi
-        $this->muat($poktan);$gagal = collect($this->syarat($poktan))->where('ok', false);
+        $this->muat($poktan);
+        $gagal = collect($this->syarat($poktan))->where('ok', false);
 
         if ($gagal->isNotEmpty()) {
             return back()->with('error', 'Belum bisa disetujui: ' . $gagal->pluck('label')->implode('; ') . '.');
         }
 
-        $aktif =$poktan->anggota->where('status', '!=', 'nonaktif');
+        $aktif = $poktan->anggota->where('status', '!=', 'nonaktif');
 
-        DB::transaction(function () use ($poktan, $aktif,$data) {
+        DB::transaction(function () use ($poktan, $aktif, $data) {
             $this->hitungUlang($poktan);
 
             $poktan->update([
@@ -108,28 +107,29 @@ class PoktanController extends Controller
                 'catatan_admin' => $data['catatan_admin'] ?? null,
                 'disetujui_at' => now(),
                 'dikunci_at' => $poktan->dikunci_at ?? now(),
+                'ttd_dikirim_at' => $poktan->ttd_dikirim_at ?? now(),
             ]);
 
             // Hubungkan akun yang sudah punya anggota (user_id) atau yang NIK-nya sama
-            $nik =$aktif->pluck('nik')->filter()->all();
-            $akunPerNik = User::where('role', 'user')->whereIn('nik',$nik)->pluck('id', 'nik');
+            $nik = $aktif->pluck('nik')->filter()->all();
+            $akunPerNik = User::where('role', 'user')->whereIn('nik', $nik)->pluck('id', 'nik');
 
-            foreach ($aktif->whereNull('user_id') as$a) {
+            foreach ($aktif->whereNull('user_id') as $a) {
                 if ($uid = $akunPerNik[$a->nik] ?? null) {
-                    $a->update(['user_id' =>$uid]);
+                    $a->update(['user_id' => $uid]);
                 }
             }
 
-            $idAkun =$aktif->pluck('user_id')->filter()
+            $idAkun = $aktif->pluck('user_id')->filter()
                 ->merge($akunPerNik->values())
                 ->push($poktan->diajukan_oleh)
                 ->filter()->unique()->all();
 
-            User::whereIn('id', $idAkun)->update(['poktan_id' =>$poktan->id]);
+            User::whereIn('id', $idAkun)->update(['poktan_id' => $poktan->id]);
         });
 
-        return redirect()->route('admin.poktan.show', $poktan)
-            ->with('success', 'Poktan "' . $poktan->nama_kelompok . '" disetujui dengan Nomor SK ' . $poktan->fresh()->nomor_sk . '.');
+        return redirect()->route('admin.poktan.kelola', $poktan)
+            ->with('success', 'Poktan "' . $poktan->nama_kelompok . '" disetujui (SK: ' . $poktan->fresh()->nomor_sk . ') dan otomatis dikirim ke Kepala UPTD untuk TTD.');
     }
 
     /** Tahapan TTD SK Pengukuhan ke Kepala UPTD & Penerbitan ke Petani */
@@ -340,7 +340,7 @@ class PoktanController extends Controller
 
         $this->hitungUlang($poktan);
 
-        return redirect()->to(route('admin.poktan.show', $poktan) . '#anggota')
+        return redirect()->to(route('admin.poktan.kelola', $poktan) . '#anggota')
             ->with('success', 'Anggota "' . $nama . '" dihapus.');
     }
 

@@ -24,10 +24,10 @@
 
     {{-- Navigasi & Header --}}
     <div class="mb-6">
-        <a href="{{ route('user.poktan') }}" class="inline-flex items-center gap-1.5 text-sm text-[#5C6B62] hover:text-[#1B4332] mb-3 transition">
-            <i class="bi bi-arrow-left"></i><span>Kembali ke Poktan</span>
-        </a>
-
+        <x-tombol-kembali :href="route('user.poktan')" />
+    </div>
+    
+    <div>
         <div class="flex items-start justify-between gap-4 flex-wrap">
             <div>
                 <p class="text-xs font-semibold tracking-wider text-[#2D6A4F] uppercase">Profil Kelembagaan Tani</p>

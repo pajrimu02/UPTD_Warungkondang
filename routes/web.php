@@ -70,7 +70,7 @@ Route::middleware(['auth', 'role:user'])->prefix('dashboard')->name('user.')->gr
     Route::post('/poktan/gabung', [PoktanController::class, 'gabungCek'])->middleware('throttle:10,1')->name('poktan.gabung.cek');
     Route::post('/poktan/gabung/konfirmasi', [PoktanController::class, 'gabungKonfirmasi'])->middleware('throttle:10,1')->name('poktan.gabung.konfirmasi');
     Route::post('/poktan/gabung/batal', [PoktanController::class, 'gabungBatal'])->name('poktan.gabung.batal');
-
+    
     Route::get('/poktan/{poktan}', [PoktanController::class, 'show'])->whereNumber('poktan')->name('poktan.show');
     Route::get('/poktan/{poktan}/anggota', [PoktanController::class, 'anggota'])->whereNumber('poktan')->name('poktan.anggota');
     Route::post('/poktan/{poktan}/anggota', [PoktanController::class, 'anggotaStore'])->whereNumber('poktan')->name('poktan.anggota.store');

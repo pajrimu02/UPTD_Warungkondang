@@ -48,7 +48,7 @@ class RegisteredUserController extends Controller
             'nik.digits'  => 'NIK harus 16 digit angka.',
             'nik.unique'  => 'NIK sudah terdaftar.',
             'no_hp.regex' => 'Format No. HP tidak valid (contoh: 081234567890).',
-            'nama_kapal.required_if' => 'Nama kapal wajib diisi untuk usaha perikanan.',
+            'nama_kapal' => ['nullable', 'required_if:konsumen_pengguna,usaha_perikanan,transportasi_motor_tempel', 'string', 'max:50'],
         ]);
 
         // Keanggotaan poktan tidak diatur di sini: lewat kode undangan atau ditetapkan admin

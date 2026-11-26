@@ -27,9 +27,7 @@
         $tahapTerbuka = in_array($s->status, ['diproses', 'diterima'], true) && $s->nomor_surat;
     @endphp
 
-    <a href="{{ route('admin.surat-pupuk.index') }}" class="flex items-center gap-1.5 text-sm text-[#5C6B62] mb-4">
-        <i class="bi bi-arrow-left"></i><span>Kembali</span>
-    </a>
+    <x-tombol-kembali :href="route('admin.surat-pupuk.index')" />
 
     <div class="flex items-center justify-between gap-3 flex-wrap mb-6">
         <div>

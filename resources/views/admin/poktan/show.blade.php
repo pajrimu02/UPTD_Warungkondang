@@ -15,9 +15,7 @@
     @endphp
 
     <div class="flex items-center justify-between gap-3 flex-wrap mb-4">
-        <a href="{{ route('admin.poktan.index') }}" class="flex items-center gap-1.5 text-sm text-[#5C6B62] hover:text-[#1B4332]">
-            <i class="bi bi-arrow-left"></i><span>Kembali ke Daftar</span>
-        </a>
+        <x-tombol-kembali :href="route('admin.poktan.index')" />
 
         <a href="{{ route('admin.poktan.kelola', $poktan) }}"
            class="inline-flex items-center gap-1.5 bg-[#1B4332] text-white text-xs font-medium px-4 py-2 rounded-full">

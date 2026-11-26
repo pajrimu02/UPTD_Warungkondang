@@ -27,9 +27,9 @@
         ];
     @endphp
 
-    <a href="{{ route('user.poktan') }}" class="flex items-center gap-1.5 text-sm text-[#5C6B62] mb-4">
-        <i class="bi bi-arrow-left"></i><span>Kembali</span>
-    </a>
+     <div>
+        <x-tombol-kembali :href="route('user.poktan')" />
+    </div>
 
     <h1 class="text-2xl font-semibold text-[#1B4332] mb-1">{{ $poktan->nama_kelompok }}</h1>
     <p class="text-sm text-[#5C6B62] mb-6"><i class="bi bi-geo-alt"></i> {{ $desa->nama ?? '-' }}</p>

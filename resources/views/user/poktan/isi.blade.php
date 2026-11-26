@@ -9,10 +9,9 @@
         $berkas = ['file_ktp' => ['ktp', 'KTP'], 'file_kk' => ['kk', 'Kartu Keluarga (KK)'], 'file_sppt' => ['sppt', 'SPPT Sawah']];
         $nilai = fn ($f) => old($f, $saya->{$f});
     @endphp
-
-    <a href="{{ route($isKetua ? 'user.poktan.anggota' : 'user.poktan', $isKetua ? $poktan : []) }}" class="flex items-center gap-1.5 text-sm text-[#5C6B62] mb-4">
-        <i class="bi bi-arrow-left"></i><span>Kembali</span>
-    </a>
+    <div>
+        <x-tombol-kembali :href="route($isKetua ? 'user.poktan.anggota' : 'user.poktan', $isKetua ? $poktan : [])" />
+    </div>
 
     <h1 class="text-2xl font-semibold text-[#1B4332] mb-1">Data Diri Anggota</h1>
     <p class="text-sm text-[#5C6B62] mb-6">{{ $poktan->nama_kelompok }} · {{ $poktan->desa->nama ?? '-' }} · Anda: {{ $isKetua ? 'Ketua' : 'Anggota' }}</p>

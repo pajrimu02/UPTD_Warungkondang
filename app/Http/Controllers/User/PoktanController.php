@@ -122,16 +122,24 @@ class PoktanController extends Controller
         return view('user.poktan.show', compact('poktan', 'isKetua', 'saya'));
     }
 
-    /** Unduh SK Pengukuhan Poktan Resmi yang sudah ditandatangani Kepala UPTD */
-    public function skResmi(Request $request, Poktan $poktan)
+    /** Halaman Pratinjau & Unduh SK Pengukuhan Poktan Resmi */
+    public function skResmi(Request $request, Poktan $poktan): View|RedirectResponse
     {
         $saya = $this->barisSaya($poktan);
         $isKetua = $this->adalahKetua($poktan);
 
         abort_unless($saya || $isKetua || (int) $request->user()->poktan_id === (int) $poktan->id, 403);
-        abort_unless($poktan->diserahkan_at && $poktan->file_sk_resmi && Storage::disk('public')->exists($poktan->file_sk_resmi), 404);
 
-        return Storage::disk('public')->response($poktan->file_sk_resmi);
+        if ($poktan->status === 'draft') {
+            return redirect()->route($isKetua ? 'user.poktan.anggota' : 'user.poktan.isi', $poktan);
+        }
+
+        $poktan->load('desa');
+
+        return view('user.poktan.resmi', [
+            'data' => $poktan,
+            'isKetua' => $isKetua,
+        ]);
     }
 
     // ------------------------------------------------------------------ ketua: kelola anggota
@@ -345,7 +353,29 @@ class PoktanController extends Controller
         $saya = $this->barisSaya($poktan);
         abort_unless($saya && $poktan->status === 'draft', 403);
 
-        $berkas = fn (string $f) => [$saya->{$f} ? 'nullable' : 'required', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:2048'];
+        // 1. Validasi & simpan berkas terlebih dahulu agar tidak hilang jika input teks gagal validasi
+        $request->validate([
+            'file_ktp' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:2048'],
+            'file_kk' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:2048'],
+            'file_sppt' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:2048'],
+        ]);
+
+        $berkasTersimpan = false;
+        foreach (['file_ktp', 'file_kk', 'file_sppt'] as $f) {
+            if ($request->hasFile($f)) {
+                if ($saya->{$f}) {
+                    Storage::disk('local')->delete($saya->{$f});
+                }
+                $saya->{$f} = $request->file($f)->store('poktan/anggota', 'local');
+                $berkasTersimpan = true;
+            }
+        }
+        if ($berkasTersimpan) {
+            $saya->save();
+        }
+
+        // 2. Validasi seluruh biodata & kelengkapan berkas
+        $berkasWajib = fn (string $f) => [$saya->{$f} ? 'nullable' : 'required'];
 
         $data = $request->validate([
             'nama' => ['required', 'string', 'max:255'],
@@ -356,9 +386,13 @@ class PoktanController extends Controller
             'no_hp' => ['required', 'string', 'max:20'],
             'alamat' => ['required', 'string', 'max:500'],
             'luas_lahan_ha' => ['required', 'numeric', 'min:0.01', 'max:9999'],
-            'file_ktp' => $berkas('file_ktp'),
-            'file_kk' => $berkas('file_kk'),
-            'file_sppt' => $berkas('file_sppt'),
+            'file_ktp' => $berkasWajib('file_ktp'),
+            'file_kk' => $berkasWajib('file_kk'),
+            'file_sppt' => $berkasWajib('file_sppt'),
+        ], [
+            'file_ktp.required' => 'Berkas KTP wajib diunggah.',
+            'file_kk.required' => 'Berkas Kartu Keluarga (KK) wajib diunggah.',
+            'file_sppt.required' => 'Berkas SPPT Sawah wajib diunggah.',
         ]);
 
         $data['nik'] = $request->user()->nik;
@@ -373,16 +407,7 @@ class PoktanController extends Controller
             return back()->withErrors(['nama' => 'NIK akun Anda sudah tercatat di poktan lain. Hubungi petugas UPTD.'])->withInput();
         }
 
-        foreach (['file_ktp', 'file_kk', 'file_sppt'] as $f) {
-            if ($request->hasFile($f)) {
-                if ($saya->{$f}) {
-                    Storage::disk('local')->delete($saya->{$f});
-                }
-                $data[$f] = $request->file($f)->store('poktan/anggota', 'local');
-            } else {
-                unset($data[$f]);
-            }
-        }
+        unset($data['file_ktp'], $data['file_kk'], $data['file_sppt']);
 
         $saya->fill($data);
         $saya->status = ($saya->file_ktp && $saya->file_kk && $saya->file_sppt) ? 'lengkap' : 'menunggu';

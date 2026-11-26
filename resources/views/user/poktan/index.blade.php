@@ -64,7 +64,36 @@
                 @elseif ($poktan->status === 'diajukan')
                     <p class="text-sm bg-amber-50 border border-amber-200 text-amber-800 rounded-xl px-4 py-3"><i class="bi bi-hourglass-split"></i> Pengajuan sedang diverifikasi admin UPTD.</p>
                 @elseif ($poktan->status === 'disetujui')
-                    <a href="{{ route('user.poktan.show', $poktan) }}" class="text-sm text-[#2D6A4F] font-semibold">Lihat profil lengkap & daftar anggota <i class="bi bi-arrow-right"></i></a>
+                    <div class="grid sm:grid-cols-3 gap-3 pt-1">
+                        <a href="{{ route('user.poktan.show', $poktan) }}#detail-poktan"
+                           class="group border border-[#E1DCC9] bg-[#FAF9F4] hover:border-[#2D6A4F] hover:bg-white rounded-2xl p-4 transition">
+                            <span class="w-9 h-9 rounded-xl bg-[#EAF2EC] text-[#1B4332] flex items-center justify-center text-base mb-3">
+                                <i class="bi bi-info-circle"></i>
+                            </span>
+                            <p class="font-semibold text-sm text-[#1B4332] group-hover:text-[#2D6A4F]">Detail Poktan</p>
+                            <p class="text-xs text-[#5C6B62] mt-0.5">Sekretariat & ringkasan lahan</p>
+                        </a>
+
+                        <a href="{{ route('user.poktan.sk-resmi', $poktan) }}"
+                           class="group border border-[#E1DCC9] bg-[#FAF9F4] hover:border-[#2D6A4F] hover:bg-white rounded-2xl p-4 transition">
+                            <span class="w-9 h-9 rounded-xl bg-[#F6EDC9] text-[#7A5C12] flex items-center justify-center text-base mb-3">
+                                <i class="bi bi-file-earmark-text"></i>
+                            </span>
+                            <p class="font-semibold text-sm text-[#1B4332] group-hover:text-[#2D6A4F]">Surat Resmi (SK)</p>
+                            <p class="text-xs text-[#5C6B62] mt-0.5">
+                                {{ $poktan->diserahkan_at && $poktan->file_sk_resmi ? 'SK resmi siap dilihat & diunduh' : 'Cek status penerbitan SK' }}
+                            </p>
+                        </a>
+
+                        <a href="{{ route('user.poktan.show', $poktan) }}#daftar-anggota"
+                           class="group border border-[#E1DCC9] bg-[#FAF9F4] hover:border-[#2D6A4F] hover:bg-white rounded-2xl p-4 transition">
+                            <span class="w-9 h-9 rounded-xl bg-[#EAF2EC] text-[#1B4332] flex items-center justify-center text-base mb-3">
+                                <i class="bi bi-people"></i>
+                            </span>
+                            <p class="font-semibold text-sm text-[#1B4332] group-hover:text-[#2D6A4F]">Daftar Anggota</p>
+                            <p class="text-xs text-[#5C6B62] mt-0.5">{{ $poktan->anggota_count }} anggota & berkas Anda</p>
+                        </a>
+                    </div>
                 @else
                     <div class="text-sm bg-red-50 border border-red-200 text-red-800 rounded-xl px-4 py-3">
                         <p class="font-semibold">Pengajuan ditolak</p>
