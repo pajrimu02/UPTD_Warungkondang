@@ -31,51 +31,68 @@ class SuratSolarController extends Controller
     }
 
     public function update(Request $request, SuratSolar $suratSolar): RedirectResponse
-{
-    $validated = $request->validate([
-        'status' => ['required', 'in:diajukan,diproses,ditolak,diterima'],
-        'catatan_admin' => ['nullable', 'string', 'max:1000'],
-        'alokasi_volume' => ['nullable', 'numeric', 'min:0'],
-        'tempat_pengambilan' => ['nullable', 'string', 'max:255'],
-        'nomor_penyalur' => ['nullable', 'string', 'max:100'],
-        'alamat_penyalur' => ['nullable', 'string', 'max:500'],
-        'alat_pembelian' => ['nullable', 'string', 'max:100'],
-        'berlaku_sampai' => ['nullable', 'date'],
-    ]);
+    {
+        $validated = $request->validate([
+            'status' => ['required', 'in:diajukan,diproses,ditolak,diterima'],
+            'alokasi_volume' => ['nullable', 'numeric', 'min:0'],
+            'tempat_pengambilan' => ['nullable', 'string', 'max:255'],
+            'nomor_penyalur' => ['nullable', 'string', 'max:100'],
+            'alamat_penyalur' => ['nullable', 'string', 'max:255'],
+            'alat_pembelian' => ['nullable', 'string', 'max:255'],
+            'berlaku_sampai' => ['nullable', 'date'],
+            'catatan_admin' => ['nullable', 'string', 'max:1000'],
+        ]);
 
-    if ($validated['status'] === 'diterima' && ! $suratSolar->diserahkan_at) {
-        return back()->withErrors(['status' => 'Status "Diterima" terisi otomatis saat surat dikirim ke petani.'])->withInput();
-    }
+        if ($validated['status'] === 'diterima' && ! $suratSolar->diserahkan_at) {
+            return back()->withErrors(['status' => 'Status "Diterima" terisi otomatis saat surat dikirim ke petani.'])->withInput();
+        }
 
-    if ($validated['status'] === 'ditolak' && blank($validated['catatan_admin'] ?? null)) {
-        return back()->withErrors(['catatan_admin' => 'Isi alasan penolakan.'])->withInput();
-    }
+        if ($validated['status'] === 'ditolak' && blank($validated['catatan_admin'] ?? null)) {
+            return back()->withErrors(['catatan_admin' => 'Isi alasan penolakan pada kolom Catatan Admin.'])->withInput();
+        }
 
-    // "Diproses" = admin menyetujui dan menyiapkan surat
-    if ($validated['status'] === 'diproses') {
-        foreach ($suratSolar->isianOtomatis() as $kolom => $nilai) {
-            if (blank($validated[$kolom] ?? null)) {
-                $validated[$kolom] = $suratSolar->$kolom ?? $nilai;
+        if ($validated['status'] === 'diproses') {
+            $kurang = collect([
+                'alokasi_volume' => 'Alokasi Volume (Liter per Minggu)',
+                'berlaku_sampai' => 'Berlaku Sampai',
+                'tempat_pengambilan' => 'Tempat Pengambilan',
+                'nomor_penyalur' => 'Nomor Penyalur',
+                'alamat_penyalur' => 'Alamat Penyalur',
+                'alat_pembelian' => 'Alat Pembelian',
+            ])->filter(fn ($label, $field) => blank($validated[$field] ?? null));
+
+            if ($kurang->isNotEmpty()) {
+                return back()->withErrors([
+                    'status' => 'Lengkapi kolom hasil verifikasi: ' . $kurang->implode(', ') . '.',
+                ])->withInput();
             }
         }
 
-        if (blank($validated['nomor_penyalur']) || blank($validated['alamat_penyalur'])) {
-            return back()->withErrors(['nomor_penyalur' => 'Nomor dan alamat penyalur belum ada.'])->withInput();
+        $namaPemohon = $suratSolar->nama_pemohon ?? $suratSolar->user->name;
+        $pesan = 'Keputusan pengajuan solar "' . $namaPemohon . '" berhasil disimpan.';
+
+        if ($validated['status'] === 'diproses') {
+            if (! $suratSolar->nomor_surat) {
+                $validated['disetujui_oleh'] = auth()->id();
+                $validated['disetujui_at'] = now();
+                $validated['nomor_surat'] = SuratSolar::generateNomorSurat();
+            }
+            if (! $suratSolar->ttd_dikirim_at) {
+                $validated['ttd_dikirim_at'] = now();
+                $pesan = 'Pengajuan solar "' . $namaPemohon . '" disetujui, nomor surat terbit, dan langsung diteruskan ke Kasubbag TU untuk ditandatangani.';
+            }
+        } elseif ($validated['status'] === 'ditolak') {
+            $pesan = 'Pengajuan solar "' . $namaPemohon . '" ditolak dan catatan penolakan telah disimpan.';
         }
 
-        if (! $suratSolar->nomor_surat) {
-            $validated['disetujui_oleh'] = auth()->id();
-            $validated['disetujui_at'] = now();
-            $validated['nomor_surat'] = SuratSolar::generateNomorSurat();
+        if (filled($validated['catatan_admin'] ?? null) && $validated['status'] !== 'ditolak') {
+            $pesan .= ' Catatan admin juga tersimpan.';
         }
+
+        $suratSolar->update($validated);
+
+        return redirect()->route('admin.surat-solar.kelola', $suratSolar)->with('success', $pesan);
     }
-
-    $suratSolar->update($validated);
-
-    return redirect()
-        ->route('admin.surat-solar.kelola', $suratSolar)
-        ->with('success', 'Keputusan pengajuan "' . ($suratSolar->nama_pemohon ?? $suratSolar->user->name) . '" disimpan.');
-}
 
         public function lembarKerja(SuratSolar $suratSolar)
         {

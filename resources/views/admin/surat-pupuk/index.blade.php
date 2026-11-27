@@ -4,7 +4,7 @@
 
 @section('content')
 
-    <x-tombol-kembali :href="route('admin.poktan.index')" />
+    <x-tombol-kembali :href="route('admin.surat-pengajuan.index')" />
 
     <div class="flex items-center justify-between gap-3 flex-wrap mb-6">
         <h1 class="text-2xl font-semibold text-[#1B4332]">Pengajuan Surat Pupuk</h1>

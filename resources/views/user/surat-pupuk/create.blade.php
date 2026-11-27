@@ -6,7 +6,14 @@
 
     @php
         $inputClass = 'w-full rounded-lg border border-[#E1DCC9] px-3.5 py-2.5 text-sm focus:outline-none focus:border-[#2D6A4F] focus:ring-2 focus:ring-[#2D6A4F]/20';
-        $pupuk = ['luas' => 'Luas (Ha)', 'urea' => 'Urea (kg)', 'sp36' => 'SP36 (kg)', 'za' => 'ZA (kg)', 'npk' => 'NPK (kg)', 'organik' => 'Organik (kg)'];
+        $pupuk = [
+            'luas' => 'Luas (Ha)',
+            'urea' => 'Urea (kg)',
+            'npk' => 'NPK (kg)',
+            'npk_formula' => 'NPK Formula (kg)',
+            'organik' => 'Organik (kg)',
+            'za' => 'ZA (kg)',
+        ];
         $subsektor = ['Tanaman Pangan', 'Hortikultura', 'Perkebunan', 'Peternakan', 'Petambak'];
     @endphp
 
@@ -104,13 +111,21 @@
             @php
                 $k = $a->id;
                 $cek = old('items') === null || old("items.$k.include");
+                $biodataKurang = blank($a->tempat_lahir) || blank($a->tanggal_lahir) || blank($a->nama_ibu_kandung);
             @endphp
             <div class="bg-white border border-[#E1DCC9] rounded-2xl p-6">
-                <label class="flex items-center gap-2.5 mb-4 cursor-pointer">
-                    <input type="checkbox" name="items[{{ $k }}][include]" value="1" @checked($cek) class="rounded border-[#E1DCC9] text-[#1B4332]">
-                    <span class="text-sm font-medium text-[#1B4332]">{{ $n + 1 }}. {{ $a->nama }}</span>
-                    <span class="text-xs text-[#5C6B62]">· sertakan dalam pengajuan</span>
-                </label>
+                <div class="flex items-center justify-between gap-2 flex-wrap mb-4">
+                    <label class="flex items-center gap-2.5 cursor-pointer">
+                        <input type="checkbox" name="items[{{ $k }}][include]" value="1" @checked($cek) class="rounded border-[#E1DCC9] text-[#1B4332]">
+                        <span class="text-sm font-medium text-[#1B4332]">{{ $n + 1 }}. {{ $a->nama }}</span>
+                        <span class="text-xs text-[#5C6B62]">· sertakan dalam pengajuan</span>
+                    </label>
+                    @if ($biodataKurang)
+                        <span class="text-[11px] bg-amber-50 border border-amber-200 text-amber-800 px-2.5 py-0.5 rounded-full">
+                            Biodata e-RDKK perlu dilengkapi
+                        </span>
+                    @endif
+                </div>
 
                 <div class="grid sm:grid-cols-2 gap-4">
                     @foreach ([

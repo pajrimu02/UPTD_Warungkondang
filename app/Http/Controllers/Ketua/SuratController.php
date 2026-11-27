@@ -171,7 +171,8 @@ class SuratController extends Controller
         $suratPupuk->load('poktan.desa', 'items');
 
         return Pdf::loadView('pdf.surat-rekomendasi-pupuk', compact('suratPupuk'))
-            ->setPaper(self::F4)->stream('Surat-Rekomendasi-Pupuk-' . $suratPupuk->id . '.pdf');
+            ->setPaper(self::F4, 'landscape')
+            ->stream('Surat-Rekomendasi-Pupuk-' . $suratPupuk->id . '.pdf');
     }
 
     public function uploadPupuk(Request $request, SuratPupuk $suratPupuk): RedirectResponse

@@ -72,27 +72,12 @@
                     <span>Kelompok Tani</span>
                 </a>
 
-                <a href="{{ route('admin.desa.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.desa.*') ? 'bg-white/15 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white' }}">
-                    <i class="bi bi-geo-alt w-5 shrink-0 text-center"></i>
-                    <span>Data Desa</span>
-                </a>
-
                 <a href="{{ route('admin.kritiksaran.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.kritiksaran.*') ? 'bg-white/15 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white' }}">
                     <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 10h8M8 14h5M5 4h14a2 2 0 012 2v10a2 2 0 01-2 2h-6l-4 3v-3H5a2 2 0 01-2-2V6a2 2 0 012-2z" />
                     </svg>
                     <span>Kritik & Saran</span>
-                </a>
-
-                <!-- <a href="{{ route('admin.stok-kuota.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.stok-kuota.*') ? 'bg-white/15 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white' }}">
-                    <i class="bi bi-fuel-pump w-5 shrink-0 text-center"></i>
-                    <span>Stok Solar & Pupuk</span>
-                </a> -->
-
-                <!-- <a href="{{ route('admin.galeri.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.galeri.*') ? 'bg-white/15 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white' }}">
-                    <i class="bi bi-images w-5 shrink-0 text-center"></i>
-                    <span>Galeri Foto & Video</span>
-                </a> -->
+               
 
                 <a href="{{ route('admin.petani.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.petani.*') ? 'bg-white/15 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white' }}">
                     <i class="bi bi-people w-5 shrink-0 text-center"></i>

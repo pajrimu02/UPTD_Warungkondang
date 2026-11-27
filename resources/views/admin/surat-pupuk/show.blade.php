@@ -5,7 +5,14 @@
 @section('content')
 
     @php
-        $pupuk = ['luas' => 'Luas (Ha)', 'urea' => 'Urea', 'sp36' => 'SP36', 'za' => 'ZA', 'npk' => 'NPK', 'organik' => 'Organik'];
+        $pupuk = [
+            'luas' => 'Luas (Ha)',
+            'urea' => 'Urea',
+            'npk' => 'NPK',
+            'npk_formula' => 'NPK Form.',
+            'organik' => 'Organik',
+            'za' => 'ZA',
+        ];
         $fmt = fn ($n) => rtrim(rtrim(number_format((float) $n, 2, ',', '.'), '0'), ',') ?: '0';
     @endphp
 
@@ -85,8 +92,8 @@
                             @foreach ($it->musim as $n => $m)
                                 <tr class="border-b border-[#E1DCC9]/60">
                                     <td class="py-1.5 pr-3">MT{{ $n + 1 }}</td>
-                                    <td class="pr-3">{{ $m['komoditas'] }}</td>
-                                    @foreach (array_keys($pupuk) as $k) <td class="pr-3">{{ $fmt($m[$k]) }}</td> @endforeach
+                                    <td class="pr-3">{{ $m['komoditas'] ?? '-' }}</td>
+                                    @foreach (array_keys($pupuk) as $k) <td class="pr-3">{{ $fmt($m[$k] ?? 0) }}</td> @endforeach
                                 </tr>
                             @endforeach
                         </tbody>

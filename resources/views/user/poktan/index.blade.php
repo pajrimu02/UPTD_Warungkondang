@@ -65,7 +65,7 @@
                     <p class="text-sm bg-amber-50 border border-amber-200 text-amber-800 rounded-xl px-4 py-3"><i class="bi bi-hourglass-split"></i> Pengajuan sedang diverifikasi admin UPTD.</p>
                 @elseif ($poktan->status === 'disetujui')
                     <div class="grid sm:grid-cols-3 gap-3 pt-1">
-                        <a href="{{ route('user.poktan.show', $poktan) }}#detail-poktan"
+                        <a href="{{ route('user.poktan.show', $poktan) }}"
                            class="group border border-[#E1DCC9] bg-[#FAF9F4] hover:border-[#2D6A4F] hover:bg-white rounded-2xl p-4 transition">
                             <span class="w-9 h-9 rounded-xl bg-[#EAF2EC] text-[#1B4332] flex items-center justify-center text-base mb-3">
                                 <i class="bi bi-info-circle"></i>
@@ -85,7 +85,7 @@
                             </p>
                         </a>
 
-                        <a href="{{ route('user.poktan.show', $poktan) }}#daftar-anggota"
+                        <a href="{{ route('user.poktan.daftar-anggota', $poktan) }}"
                            class="group border border-[#E1DCC9] bg-[#FAF9F4] hover:border-[#2D6A4F] hover:bg-white rounded-2xl p-4 transition">
                             <span class="w-9 h-9 rounded-xl bg-[#EAF2EC] text-[#1B4332] flex items-center justify-center text-base mb-3">
                                 <i class="bi bi-people"></i>

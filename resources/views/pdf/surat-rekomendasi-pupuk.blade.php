@@ -33,8 +33,8 @@
 @endphp
 
     <div class="kop">
-        <h3>PEMERINTAH KABUPATEN {{ strtoupper(config('uptd.kabupaten', 'CIANJUR')) }} · {{ strtoupper(config('uptd.nama', 'UPTD PELAYANAN PERTANIAN WARUNGKONDANG')) }}</h3>
-        <h2>RENCANA DEFINITIF KEBUTUHAN KELOMPOK (e-RDKK) PUPUK BERSUBSIDI</h2>
+        <h3>PEMERINTAH KABUPATEN {{ strtoupper(config('uptd.kabupaten', 'CIANJUR')) }} <br>{{ strtoupper(config('uptd.nama', 'UPTD PELAYANAN PERTANIAN WARUNGKONDANG')) }}</h3>
+        <h3>RENCANA DEFINITIF KEBUTUHAN KELOMPOK (e-RDKK) PUPUK BERSUBSIDI</h3>
         <p>Nomor Surat: <strong>{{ $surat->nomor_surat ?? '-' }}</strong> · Alokasi Tahun Tanam {{ $surat->created_at?->format('Y') ?? date('Y') }}</p>
     </div>
 

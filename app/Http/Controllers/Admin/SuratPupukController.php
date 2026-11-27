@@ -57,16 +57,44 @@ class SuratPupukController extends Controller
             return back()->withErrors(['catatan_admin' => 'Isi alasan penolakan.'])->withInput();
         }
 
-        if ($validated['status'] === 'diproses' && ! $suratPupuk->nomor_surat) {
-            $validated['disetujui_oleh'] = auth()->id();
-            $validated['disetujui_at'] = now();
-            $validated['nomor_surat'] = SuratPupuk::generateNomorSurat();
+        $pesan = 'Keputusan pengajuan pupuk "' . $suratPupuk->poktan->nama_kelompok . '" disimpan.';
+
+        if ($validated['status'] === 'diproses') {
+            if (! $suratPupuk->nomor_surat) {
+                $validated['disetujui_oleh'] = auth()->id();
+                $validated['disetujui_at'] = now();
+                $validated['nomor_surat'] = SuratPupuk::generateNomorSurat();
+            }
+            if (! $suratPupuk->ttd_dikirim_at) {
+                $validated['ttd_dikirim_at'] = now();
+                $pesan = 'Pengajuan disetujui, nomor surat terbit, dan langsung diteruskan ke Kasubbag TU untuk ditandatangani.';
+            }
         }
 
         $suratPupuk->update($validated);
 
-        return redirect()->route('admin.surat-pupuk.kelola', $suratPupuk)
-            ->with('success', 'Keputusan pengajuan pupuk "' . $suratPupuk->poktan->nama_kelompok . '" disimpan.');
+        return redirect()->route('admin.surat-pupuk.kelola', $suratPupuk)->with('success', $pesan);
+    }
+
+    public function surat(SuratPupuk $suratPupuk)
+    {
+        $suratPupuk->load('poktan.desa', 'items');
+
+        return Pdf::loadView('pdf.surat-rekomendasi-pupuk', compact('suratPupuk'))
+            ->setPaper(self::F4, 'landscape')
+            ->stream('Surat-Rekomendasi-Pupuk-' . $suratPupuk->id . '.pdf');
+    }
+
+    private function rekap(SuratPupuk $surat): array
+    {
+        $rekap = [];
+        foreach ([0, 1, 2] as $m) {
+            foreach (['luas', 'urea', 'npk', 'npk_formula', 'organik', 'za'] as $k) {
+                $rekap[$m][$k] = $surat->items->sum(fn ($it) => (float) ($it->musim[$m][$k] ?? 0));
+            }
+        }
+
+        return $rekap;
     }
 
     public function tahap(Request $request, SuratPupuk $suratPupuk): RedirectResponse
@@ -94,16 +122,6 @@ class SuratPupukController extends Controller
         $s->update(['status' => 'diterima', 'diserahkan_at' => now()]);
 
         return back()->with('success', 'Surat dikirim ke petani. Status pengajuan kini Diterima.');
-    }
-
-   
-    public function surat(SuratPupuk $suratPupuk)
-    {
-        $suratPupuk->load('poktan.desa', 'items');
-
-        return Pdf::loadView('pdf.surat-rekomendasi-pupuk', compact('suratPupuk'))
-            ->setPaper(self::F4)
-            ->stream('Surat-Rekomendasi-Pupuk-' . $suratPupuk->id . '.pdf');
     }
 
    
@@ -150,16 +168,4 @@ class SuratPupukController extends Controller
             ->with('success', 'Pengajuan pupuk "' . $nama . '" dihapus.');
     }
 
-   
-    private function rekap(SuratPupuk $surat): array
-    {
-        $rekap = [];
-        foreach ([0, 1, 2] as $m) {
-            foreach (['luas', 'urea', 'sp36', 'za', 'npk', 'organik'] as $k) {
-                $rekap[$m][$k] = $surat->items->sum(fn ($it) => (float) ($it->musim[$m][$k] ?? 0));
-            }
-        }
-
-        return $rekap;
-    }
 }

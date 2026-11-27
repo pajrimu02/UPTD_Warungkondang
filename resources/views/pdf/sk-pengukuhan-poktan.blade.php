@@ -54,7 +54,7 @@
 
     <div class="kop">
         <p style="font-size: 13px; font-weight: bold;">PEMERINTAH KABUPATEN {{ strtoupper($kab) }}</p>
-        <p style="font-size: 14px; font-weight: bold;">DINAS TANAMAN PANGAN, HORTIKULTURA, PERKEBUNAN DAN KETAHANAN PANGAN</p>
+        <p style="font-size: 13px; font-weight: bold;">DINAS TANAMAN PANGAN, HORTIKULTURA, PERKEBUNAN DAN KETAHANAN PANGAN</p>
         <p style="font-size: 13px; font-weight: bold;">{{ strtoupper(config('uptd.nama')) }}</p>
         <p style="font-size: 10px;">Kecamatan {{ $kec }}, Kabupaten {{ $kab }}, Provinsi Jawa Barat</p>
     </div>

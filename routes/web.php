@@ -24,12 +24,9 @@ use App\Http\Controllers\Admin\SuratPengajuanController as AdminSuratPengajuanCo
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\SuratSolarController as AdminSuratSolarController;
 use App\Http\Controllers\Admin\KritikSaranController as AdminKritikSaranController;
-use App\Http\Controllers\Admin\StokKuotaController as AdminStokKuotaController;
-use App\Http\Controllers\Admin\GaleriController as AdminGaleriController;
 use App\Http\Controllers\Admin\PetaniController as AdminPetaniController;
 use App\Http\Controllers\Admin\SuratPupukController as AdminSuratPupukController;
 use App\Http\Controllers\Admin\PoktanController as AdminPoktanController;
-use App\Http\Controllers\Admin\DesaController as AdminDesaController;
 
 use App\Http\Controllers\Ketua\DashboardController as KetuaDashboardController;
 use App\Http\Controllers\Ketua\SuratController as KetuaSuratController;
@@ -39,7 +36,6 @@ Route::get('/gabung/{kode}', [UndanganController::class, 'show'])
     ->middleware('throttle:30,1')->name('poktan.undangan');
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/tentang-kami', [HomeController::class, 'tentangKami'])->name('tentang');
-
 Route::prefix('informasi-publik')->name('infopublik.')->group(function () {
     Route::get('/pelayanan', [PelayananController::class, 'index'])->name('pelayanan');
     Route::get('/stok-kuota', [StokKuotaController::class, 'index'])->name('stokkuota');
@@ -54,7 +50,6 @@ Route::prefix('galeri')->name('galeri.')->group(function () {
     Route::get('/foto', [GaleriController::class, 'foto'])->name('foto');
     Route::get('/video', [GaleriController::class, 'video'])->name('video');
 });
-
 Route::get('/kritik-saran', [KritikSaranController::class, 'index'])->name('kritiksaran.publik');
 Route::get('/hubungi-kami', [HomeController::class, 'hubungiKami'])->name('hubungi');
 
@@ -70,7 +65,7 @@ Route::middleware(['auth', 'role:user'])->prefix('dashboard')->name('user.')->gr
     Route::post('/poktan/gabung', [PoktanController::class, 'gabungCek'])->middleware('throttle:10,1')->name('poktan.gabung.cek');
     Route::post('/poktan/gabung/konfirmasi', [PoktanController::class, 'gabungKonfirmasi'])->middleware('throttle:10,1')->name('poktan.gabung.konfirmasi');
     Route::post('/poktan/gabung/batal', [PoktanController::class, 'gabungBatal'])->name('poktan.gabung.batal');
-    
+    Route::get('/poktan/{poktan}/daftar-anggota', [PoktanController::class, 'daftarAnggota'])->whereNumber('poktan')->name('poktan.daftar-anggota');
     Route::get('/poktan/{poktan}', [PoktanController::class, 'show'])->whereNumber('poktan')->name('poktan.show');
     Route::get('/poktan/{poktan}/anggota', [PoktanController::class, 'anggota'])->whereNumber('poktan')->name('poktan.anggota');
     Route::post('/poktan/{poktan}/anggota', [PoktanController::class, 'anggotaStore'])->whereNumber('poktan')->name('poktan.anggota.store');
@@ -83,19 +78,15 @@ Route::middleware(['auth', 'role:user'])->prefix('dashboard')->name('user.')->gr
     Route::post('/poktan/{poktan}/kode', [PoktanController::class, 'kodeBaru'])->whereNumber('poktan')->name('poktan.kode');
     Route::post('/poktan/{poktan}/selesai', [PoktanController::class, 'selesai'])->whereNumber('poktan')->name('poktan.selesai');
     Route::post('/poktan/{poktan}/perbaiki', [PoktanController::class, 'perbaiki'])->whereNumber('poktan')->name('poktan.perbaiki');
-
     Route::get('/surat-pengajuan', [SuratPengajuanController::class, 'index'])->name('surat-pengajuan.index');
     Route::resource('surat-solar', SuratSolarController::class)->only(['index', 'create', 'store', 'show']);
     Route::get('/surat-solar/{surat_solar}/resmi', [SuratSolarController::class, 'resmi'])->name('surat-solar.resmi');
     Route::post('/surat-solar-cepat', [SuratSolarController::class, 'quickStore'])->name('surat-solar.quick-store');
-
     Route::resource('surat-pupuk', SuratPupukController::class)->only(['index', 'create', 'store', 'show']);
     Route::get('/surat-pupuk/{surat_pupuk}/resmi', [SuratPupukController::class, 'resmi'])->name('surat-pupuk.resmi');
-
     Route::get('/profil', [ProfilController::class, 'show'])->name('profil');
     Route::get('/profil/edit', [ProfilController::class, 'edit'])->name('profil.edit');
     Route::put('/profil', [ProfilController::class, 'update'])->name('profil.update');
-
     Route::get('/kritik-saran', [KritikSaranUserController::class, 'create'])->name('kritiksaran.create');
     Route::post('/kritik-saran', [KritikSaranUserController::class, 'store'])->name('kritiksaran.store');
 });
@@ -139,15 +130,13 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::put('/poktan/{poktan}/anggota/{anggota}', [AdminPoktanController::class, 'updateAnggota'])->name('poktan.anggota.update');
     Route::delete('/poktan/{poktan}/anggota/{anggota}', [AdminPoktanController::class, 'hapusAnggota'])->name('poktan.anggota.destroy');
 
-    // Desa, Petani, Stok, Galeri
-    Route::resource('desa', AdminDesaController::class)->only(['index', 'store', 'update', 'destroy']);
+    // Petani
     Route::get('/petani', [AdminPetaniController::class, 'index'])->name('petani.index');
     Route::get('/petani/{user}/edit', [AdminPetaniController::class, 'edit'])->name('petani.edit');
     Route::put('/petani/{user}', [AdminPetaniController::class, 'update'])->name('petani.update');
     Route::post('/petani/{user}/status', [AdminPetaniController::class, 'ubahStatus'])->name('petani.status');
     Route::post('/petani/{user}/reset-password', [AdminPetaniController::class, 'resetPassword'])->name('petani.reset-password');
-    Route::resource('stok-kuota', AdminStokKuotaController::class)->except(['show']);
-    Route::resource('galeri', AdminGaleriController::class)->except(['show']);
+    
 
     // Kritik & Saran
     Route::get('/kritik-saran', [AdminKritikSaranController::class, 'index'])->name('kritiksaran.index');
@@ -162,15 +151,12 @@ Route::middleware(['auth', 'role:ketua,kepala'])->prefix('ketua')->name('ketua.'
     Route::get('/', [KetuaDashboardController::class, 'index'])->name('dashboard');
     Route::get('/surat', [KetuaSuratController::class, 'index'])->name('surat.index');
     Route::get('/rekap', [KetuaSuratController::class, 'rekap'])->name('rekap');
-
     Route::get('/surat/solar/{suratSolar}/cetak', [KetuaSuratController::class, 'cetakSolar'])->name('surat.cetak-solar');
     Route::post('/surat/solar/{suratSolar}/upload', [KetuaSuratController::class, 'uploadSolar'])->name('surat.upload-solar');
     Route::get('/surat/pupuk/{suratPupuk}/cetak', [KetuaSuratController::class, 'cetakPupuk'])->name('surat.cetak-pupuk');
     Route::post('/surat/pupuk/{suratPupuk}/upload', [KetuaSuratController::class, 'uploadPupuk'])->name('surat.upload-pupuk');
-
     Route::get('/surat/poktan/{poktan}/cetak', [KetuaSuratController::class, 'cetakPoktan'])->name('surat.cetak-poktan');
     Route::post('/surat/poktan/{poktan}/upload', [KetuaSuratController::class, 'uploadPoktan'])->name('surat.upload-poktan');
-
     Route::get('/surat/{jenis}/{id}/scan', [KetuaSuratController::class, 'scan'])
         ->whereIn('jenis', ['solar', 'pupuk', 'poktan'])->whereNumber('id')->name('surat.scan');
     Route::delete('/surat/{jenis}/{id}/scan', [KetuaSuratController::class, 'hapusScan'])

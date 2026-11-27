@@ -36,21 +36,27 @@
                     <table class="w-full text-xs">
                         <thead>
                             <tr class="text-left text-[#5C6B62] border-b border-[#E1DCC9]">
-                                <th class="py-1.5 pr-3">MT</th><th class="pr-3">Komoditas</th><th class="pr-3">Luas</th>
-                                <th class="pr-3">Urea</th><th class="pr-3">SP36</th><th class="pr-3">ZA</th><th class="pr-3">NPK</th><th>Organik</th>
+                                <th class="py-1.5 pr-3">MT</th>
+                                <th class="pr-3">Komoditas</th>
+                                <th class="pr-3">Luas (Ha)</th>
+                                <th class="pr-3">Urea (kg)</th>
+                                <th class="pr-3">NPK (kg)</th>
+                                <th class="pr-3">NPK Form. (kg)</th>
+                                <th class="pr-3">Organik (kg)</th>
+                                <th>ZA (kg)</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach ($it->musim as $n => $m)
                                 <tr class="border-b border-[#E1DCC9]/60">
                                     <td class="py-1.5 pr-3">MT{{ $n + 1 }}</td>
-                                    <td class="pr-3">{{ $m['komoditas'] }}</td>
-                                    <td class="pr-3">{{ $m['luas'] }}</td>
-                                    <td class="pr-3">{{ $m['urea'] }}</td>
-                                    <td class="pr-3">{{ $m['sp36'] }}</td>
-                                    <td class="pr-3">{{ $m['za'] }}</td>
-                                    <td class="pr-3">{{ $m['npk'] }}</td>
-                                    <td>{{ $m['organik'] }}</td>
+                                    <td class="pr-3">{{ $m['komoditas'] ?? '-' }}</td>
+                                    <td class="pr-3">{{ $m['luas'] ?? 0 }}</td>
+                                    <td class="pr-3">{{ $m['urea'] ?? 0 }}</td>
+                                    <td class="pr-3">{{ $m['npk'] ?? 0 }}</td>
+                                    <td class="pr-3">{{ $m['npk_formula'] ?? 0 }}</td>
+                                    <td class="pr-3">{{ $m['organik'] ?? 0 }}</td>
+                                    <td>{{ $m['za'] ?? 0 }}</td>
                                 </tr>
                             @endforeach
                         </tbody>

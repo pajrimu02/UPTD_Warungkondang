@@ -144,6 +144,32 @@ class PoktanController extends Controller
 
     // ------------------------------------------------------------------ ketua: kelola anggota
 
+    /** Halaman Khusus Daftar Pengurus & Anggota Poktan (Status Disetujui) */
+    public function daftarAnggota(Request $request, Poktan $poktan): View|RedirectResponse
+    {
+        $saya = $this->barisSaya($poktan);
+        $isKetua = $this->adalahKetua($poktan);
+
+        abort_unless($saya || $isKetua || (int) $request->user()->poktan_id === (int) $poktan->id, 403);
+
+        if ($poktan->status === 'draft') {
+            return redirect()->route($isKetua ? 'user.poktan.anggota' : 'user.poktan.isi', $poktan);
+        }
+
+        $poktan->load([
+            'desa',
+            'anggota' => fn ($q) => $q->where('status', '!=', 'nonaktif')
+                ->orderByRaw("FIELD(jabatan, 'ketua', 'sekretaris', 'bendahara', 'anggota')")
+                ->orderBy('nama'),
+        ]);
+
+        return view('user.poktan.daftar-anggota', [
+            'poktan' => $poktan,
+            'saya' => $saya,
+            'isKetua' => $isKetua,
+        ]);
+    }
+
     public function anggota(Request $request, Poktan $poktan): View|RedirectResponse
     {
         abort_unless($this->adalahKetua($poktan), 403);

@@ -52,10 +52,13 @@ class SuratPupukController extends Controller
             return $this->tolak();
         }
 
-        $poktan->load(['desa', 'anggota' => fn ($q) => $q->orderBy('nama')]);
+        $poktan->load([
+            'desa',
+            'anggota' => fn ($q) => $q->where('status', '!=', 'nonaktif')->orderBy('nama'),
+        ]);
 
         if ($poktan->anggota->isEmpty()) {
-            return redirect()->route('user.surat-pengajuan.index')->with('error', 'Poktan belum punya anggota.');
+            return redirect()->route('user.surat-pengajuan.index')->with('error', 'Poktan belum punya anggota aktif.');
         }
 
         $penyuluhOtomatis = $this->penyuluhUntukPoktan($poktan);
@@ -72,7 +75,11 @@ class SuratPupukController extends Controller
             return $this->tolak();
         }
 
-        $anggotaIds = $poktan->anggota()->pluck('id')->map(fn ($i) => (string) $i)->all();
+        $anggotaIds = $poktan->anggota()
+            ->where('status', '!=', 'nonaktif')
+            ->pluck('id')
+            ->map(fn ($i) => (string) $i)
+            ->all();
 
         $items = collect($request->input('items', []))
             ->filter(fn ($row, $id) => ! empty($row['include']) && in_array((string) $id, $anggotaIds, true))
@@ -106,10 +113,10 @@ class SuratPupukController extends Controller
             'items.*.musim.*.komoditas' => 'nullable|string|max:100',
             'items.*.musim.*.luas' => 'nullable|numeric|min:0',
             'items.*.musim.*.urea' => 'nullable|numeric|min:0',
-            'items.*.musim.*.sp36' => 'nullable|numeric|min:0',
-            'items.*.musim.*.za' => 'nullable|numeric|min:0',
             'items.*.musim.*.npk' => 'nullable|numeric|min:0',
+            'items.*.musim.*.npk_formula' => 'nullable|numeric|min:0',
             'items.*.musim.*.organik' => 'nullable|numeric|min:0',
+            'items.*.musim.*.za' => 'nullable|numeric|min:0',
         ], [
             'items.required' => 'Pilih minimal satu petani.',
             'items.*.nik.digits' => 'NIK harus 16 digit angka.',
@@ -135,10 +142,10 @@ class SuratPupukController extends Controller
                     'komoditas' => ($m['komoditas'] ?? '') !== '' ? $m['komoditas'] : '-',
                     'luas' => (float) ($m['luas'] ?? 0),
                     'urea' => (float) ($m['urea'] ?? 0),
-                    'sp36' => (float) ($m['sp36'] ?? 0),
-                    'za' => (float) ($m['za'] ?? 0),
                     'npk' => (float) ($m['npk'] ?? 0),
+                    'npk_formula' => (float) ($m['npk_formula'] ?? 0),
                     'organik' => (float) ($m['organik'] ?? 0),
+                    'za' => (float) ($m['za'] ?? 0),
                 ])->all();
 
                 $surat->items()->create(array_merge($row, [
